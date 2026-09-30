@@ -1023,7 +1023,7 @@ function cartelCard(c){
   const color = temaColor(c.tematica);
   const estadoPill = c.estado === 'disponible' ? `<span class="pill pill-green">Disponible</span>` : `<span class="pill pill-warn">Alquilado</span>`;
   const swatch = c.imagen
-    ? `<div class="swatch" style="background-image:url('${c.imagen}'); background-size:cover; background-position:center; color:#fff;"></div>`
+    ? `<div class="swatch" data-lightbox-cartel="${c.id}" style="background-image:url('${c.imagen}'); background-size:cover; background-position:center; color:#fff; cursor:zoom-in;"></div>`
     : `<div class="swatch" style="background:linear-gradient(135deg, ${color}22, ${color}0d); color:${color}; border-color:${color}33;">${esc(c.tematica||'Otro')}</div>`;
   return `<div class="cat-card">
     <div class="cardacts">
@@ -1365,7 +1365,7 @@ function galleryCard(c){
   const av = cartelAvailability(c.id);
   const availLabel = av.disponible ? 'Disponible hoy' : (av.dias == null ? 'Consultar disponibilidad' : `Disponible en ${av.dias} día${av.dias===1?'':'s'}`);
   const swatch = c.imagen
-    ? `<div class="gallery-swatch" style="background-image:url('${c.imagen}'); background-size:cover; background-position:center;"></div>`
+    ? `<div class="gallery-swatch" data-lightbox-cartel="${c.id}" style="background-image:url('${c.imagen}'); background-size:cover; background-position:center; cursor:zoom-in;"></div>`
     : `<div class="gallery-swatch" style="background:linear-gradient(135deg, ${color}33, ${color}0d); color:${color}; border-bottom-color:${color}33;">${esc(c.nombre)}</div>`;
   return `
     <div class="gallery-card">
@@ -1593,6 +1593,21 @@ function openModal(html, opts){
   document.querySelectorAll('.modal-close').forEach(b => b.onclick = closeModal);
 }
 function closeModal(){ document.getElementById('modal-root').innerHTML = ''; }
+
+function openLightbox(url){
+  if (!url) return;
+  const root = document.getElementById('modal-root');
+  root.innerHTML = `
+    <div class="modal-backdrop" id="backdrop" style="align-items:center;">
+      <div style="position:relative; max-width:100%; max-height:100%;">
+        <img src="${url}" style="max-width:92vw; max-height:88vh; border-radius:14px; display:block; box-shadow:0 20px 60px rgba(0,0,0,.6);">
+        <button class="iconbtn" id="lightbox-close" style="position:absolute; top:-14px; right:-14px; background:#0f1c16;">${ICON.close}</button>
+      </div>
+    </div>`;
+  document.getElementById('backdrop').onclick = (e) => { if (e.target.id === 'backdrop') closeModal(); };
+  document.getElementById('lightbox-close').onclick = closeModal;
+}
+
 
 function modalHead(title){
   return `<div class="modal-head"><h3>${esc(title)}</h3><button class="modal-close">${ICON.close}</button></div>`;
@@ -2009,6 +2024,13 @@ document.addEventListener('click', (e) => {
 
   const reservarBtn = e.target.closest('[data-reservar]');
   if (reservarBtn){ openReservarModal(reservarBtn.getAttribute('data-reservar')); return; }
+
+  const lightboxBtn = e.target.closest('[data-lightbox-cartel]');
+  if (lightboxBtn){
+    const cc = getDoc('carteles', lightboxBtn.getAttribute('data-lightbox-cartel'));
+    if (cc && cc.imagen) openLightbox(cc.imagen);
+    return;
+  }
 
   const delBtn = e.target.closest('[data-del]');
   if (delBtn){ confirmDelete(delBtn.getAttribute('data-del'), delBtn.getAttribute('data-id')); return; }
