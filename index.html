@@ -471,6 +471,18 @@
   .hero-scrolldown svg { width: 22px; height: 22px; transform: rotate(90deg); }
   @keyframes hero-bob { 0%,100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(7px); } }
 
+  /* ---------- Fotos (trabajos / clientes) ---------- */
+  .foto-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px,1fr)); gap: 12px; }
+  .foto-tile { position: relative; border-radius: 12px; overflow: hidden; aspect-ratio: 1; background: var(--panel-2); border: 1px solid var(--panel-border-soft); }
+  .foto-tile img { width: 100%; height: 100%; object-fit: cover; display: block; cursor: zoom-in; }
+  .foto-add-tile {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+    border: 1px dashed var(--panel-border); border-radius: 12px; aspect-ratio: 1; color: var(--ink-dim);
+    cursor: pointer; background: #08110d; font-size: 11.5px; font-weight: 700; text-align: center; padding: 8px;
+  }
+  .foto-add-tile svg { width: 22px; height: 22px; }
+  .foto-add-tile:hover { border-color: var(--green-soft); color: var(--green); }
+
   .gallery-video { max-width: 720px; margin: 0 auto 8px; padding: 0 20px; }
   .gallery-video .frame { position: relative; padding-top: 56.25%; border-radius: 14px; overflow: hidden; border: 1px solid var(--panel-border-soft); }
   .gallery-video iframe, .gallery-video video { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: #000; }
@@ -571,6 +583,7 @@ const NAV = [
   { id: 'suscripciones', label: 'Suscripciones', icon: ICON.subs },
   { id: 'personalizado', label: 'Personalizado', icon: ICON.sparkle },
   { id: 'recordatorios', label: 'Avisos', icon: ICON.reminders },
+  { id: 'fotos', label: 'Fotos', icon: ICON.image },
   { id: 'precios', label: 'Precios', icon: ICON.money },
 ];
 const ADMIN_PASSWORD = 'marce313';
@@ -581,8 +594,8 @@ const SOCIAL_FACEBOOK = 'https://facebook.com/puelo.neon';
 const PLAN_TIPOS = [
   { id: 'dia', label: 'Alquiler por día' },
   { id: 'mensual_fijo', label: 'Alquiler mensual fijo' },
-  { id: 'membresia', label: 'Alquiler mensual (membresía)' },
-  { id: 'especial', label: 'Alquiler especial (membresía)' },
+  { id: 'membresia', label: 'Plan Vidriera Dinámica' },
+  { id: 'especial', label: 'Alquiler especial' },
 ];
 const DEFAULT_CONFIG = { precioDia: 0, precioMensualFijo: 0, precioMembresiaMes: 0, especialNombre: 'Alquiler especial', especialDescripcion: '', especialPrecio: 0 };
 const DEFAULT_PORTADA = {
@@ -619,8 +632,8 @@ let catFilter = 'Todos';
 let seedChecked = false;
 
 let screen = 'gate'; // 'gate' | 'client' | 'admin'
-const state = { clientes: {}, carteles: {}, alquileres: {}, suscripciones: {}, config: {}, temas: {}, estilos: {}, personalizados: {} };
-const COLS = ['clientes','carteles','alquileres','suscripciones','config','temas','estilos','personalizados'];
+const state = { clientes: {}, carteles: {}, alquileres: {}, suscripciones: {}, config: {}, temas: {}, estilos: {}, personalizados: {}, fotos_trabajos: {}, fotos_clientes: {} };
+const COLS = ['clientes','carteles','alquileres','suscripciones','config','temas','estilos','personalizados','fotos_trabajos','fotos_clientes'];
 
 /* ============================== HELPERS ============================== */
 function uid(){ return (crypto && crypto.randomUUID) ? crypto.randomUUID() : 'id-'+Date.now()+'-'+Math.random().toString(16).slice(2); }
@@ -917,7 +930,9 @@ function renderAdminMain(){
   else if (tab === 'precios') html = renderPrecios();
   else if (tab === 'personalizado') html = renderPersonalizado();
   else if (tab === 'portada') html = renderPortada();
+  else if (tab === 'fotos') html = renderFotos();
   main.innerHTML = html;
+  if (tab === 'fotos') bindFotosTab();
 }
 
 function renderLoading(){
@@ -1075,7 +1090,7 @@ function cartelCard(c){
   const color = temaColor(c.tematica);
   const estadoPill = c.estado === 'disponible' ? `<span class="pill pill-green">Disponible</span>` : `<span class="pill pill-warn">Alquilado</span>`;
   const swatch = c.imagen
-    ? `<div class="swatch" data-lightbox-cartel="${c.id}" style="background-image:url('${c.imagen}'); background-size:cover; background-position:center; color:#fff; cursor:zoom-in;"></div>`
+    ? `<div class="swatch" data-lightbox-photo="carteles|${c.id}" style="background-image:url('${c.imagen}'); background-size:cover; background-position:center; color:#fff; cursor:zoom-in;"></div>`
     : `<div class="swatch" style="background:linear-gradient(135deg, ${color}22, ${color}0d); color:${color}; border-color:${color}33;">${esc(c.tematica||'Otro')}</div>`;
   return `<div class="cat-card">
     <div class="cardacts">
@@ -1567,6 +1582,59 @@ function openPortadaImagenesModal(){
   renderInner();
 }
 
+/* ============================== FOTOS (admin: trabajos y clientes) ============================== */
+function fotoTileAdmin(col, f){
+  return `<div class="foto-tile">
+    <img src="${f.imagen}" data-lightbox-photo="${col}|${f.id}" alt="">
+    <button class="iconbtn" data-del="${col}" data-id="${f.id}" title="Eliminar" style="position:absolute; top:6px; right:6px; background:#0f1c16;">${ICON.trash}</button>
+  </div>`;
+}
+
+function renderFotos(){
+  const trabajos = arr('fotos_trabajos');
+  const clientes = arr('fotos_clientes');
+  return `
+    <div class="page-head">
+      <div><h1>Fotos de la galería</h1><p class="sub">Imágenes de tus trabajos y de locales de clientes, para mostrar en la página.</p></div>
+    </div>
+    <div class="section-title"><span>Nuestros trabajos ${trabajos.length?`<span class="pill pill-mute">${trabajos.length}</span>`:''}</span></div>
+    <div class="foto-grid" style="margin-bottom:28px;">
+      <label class="foto-add-tile" for="foto-trabajo-input">${ICON.upload}<span>Agregar foto</span></label>
+      <input type="file" accept="image/*" id="foto-trabajo-input" class="visually-hidden">
+      ${trabajos.map(f => fotoTileAdmin('fotos_trabajos', f)).join('')}
+    </div>
+    <div class="section-title"><span>Nuestros clientes · Trabajos en la calle ${clientes.length?`<span class="pill pill-mute">${clientes.length}</span>`:''}</span></div>
+    <div class="foto-grid">
+      <label class="foto-add-tile" for="foto-cliente-input">${ICON.upload}<span>Agregar foto</span></label>
+      <input type="file" accept="image/*" id="foto-cliente-input" class="visually-hidden">
+      ${clientes.map(f => fotoTileAdmin('fotos_clientes', f)).join('')}
+    </div>
+  `;
+}
+
+function bindFotosTab(){
+  const t1 = document.getElementById('foto-trabajo-input');
+  if (t1) t1.onchange = async () => {
+    const file = t1.files && t1.files[0];
+    if (!file) return;
+    try {
+      const dataUrl = await readImageAsDataURL(file, 1100, 0.75);
+      await writeDoc('fotos_trabajos', uid(), { imagen: dataUrl, creadoEn: todayStr() });
+      showToast('Foto agregada');
+    } catch(e){ console.error(e); showToast('No se pudo procesar la imagen.'); }
+  };
+  const t2 = document.getElementById('foto-cliente-input');
+  if (t2) t2.onchange = async () => {
+    const file = t2.files && t2.files[0];
+    if (!file) return;
+    try {
+      const dataUrl = await readImageAsDataURL(file, 1100, 0.75);
+      await writeDoc('fotos_clientes', uid(), { imagen: dataUrl, creadoEn: todayStr() });
+      showToast('Foto agregada');
+    } catch(e){ console.error(e); showToast('No se pudo procesar la imagen.'); }
+  };
+}
+
 function renderPersonalizado(){
   const estilos = arr('estilos').sort((a,b)=>(a.orden||0)-(b.orden||0));
   const solicitudes = arr('personalizados').sort((a,b)=> (b.fecha||'').localeCompare(a.fecha||''));
@@ -1713,6 +1781,8 @@ function renderClientScreen(){
     ${temasPresentes.length === 0 ?
       `<div class="empty" style="margin:0 20px;"><b>Catálogo en preparación</b>Muy pronto vas a poder ver nuestros carteles acá.</div>` :
       temasPresentes.map(t => renderTemaCarousel(t, carteles.filter(c => c.tematica === t.nombre))).join('')}
+    ${renderFotoSeccion('Nuestros trabajos', 'var(--green)', 'fotos_trabajos')}
+    ${renderFotoSeccion('Nuestros clientes · Trabajos en la calle', '#ffd1e8', 'fotos_clientes')}
     <div class="gallery-social">
       <a href="${esc(SOCIAL_INSTAGRAM)}" target="_blank" rel="noopener" title="Instagram">${ICON.instagram}</a>
       <a href="${esc(SOCIAL_FACEBOOK)}" target="_blank" rel="noopener" title="Facebook">${ICON.facebook}</a>
@@ -1732,13 +1802,34 @@ function renderTemaCarousel(tema, list){
   `;
 }
 
+function renderFotoSeccion(titulo, color, col){
+  const fotos = arr(col);
+  if (!fotos.length) return '';
+  return `
+    <div class="gallery-section">
+      <h2 style="color:${color};">${esc(titulo)}</h2>
+      <div class="carousel">${fotos.map(f => `
+        <div class="gallery-card" style="cursor:zoom-in;" data-lightbox-photo="${col}|${f.id}">
+          <div class="gallery-swatch" style="background-image:url('${f.imagen}'); background-size:cover; background-position:center; height:180px; border-bottom:none;"></div>
+        </div>
+      `).join('')}</div>
+    </div>
+  `;
+}
+
 function galleryCard(c){
   const color = temaColor(c.tematica);
   const av = cartelAvailability(c.id);
   const availLabel = av.disponible ? 'Disponible hoy' : (av.dias == null ? 'Consultar disponibilidad' : `Disponible en ${av.dias} día${av.dias===1?'':'s'}`);
   const swatch = c.imagen
-    ? `<div class="gallery-swatch" data-lightbox-cartel="${c.id}" style="background-image:url('${c.imagen}'); background-size:cover; background-position:center; cursor:zoom-in;"></div>`
+    ? `<div class="gallery-swatch" data-lightbox-photo="carteles|${c.id}" style="background-image:url('${c.imagen}'); background-size:cover; background-position:center; cursor:zoom-in;"></div>`
     : `<div class="gallery-swatch" style="background:linear-gradient(135deg, ${color}33, ${color}0d); color:${color}; border-bottom-color:${color}33;">${esc(c.nombre)}</div>`;
+  const botones = av.disponible
+    ? `<div style="display:flex; gap:8px;">
+        <button class="btn btn-primary" style="flex:1;" data-reservar="${c.id}">Alquilar</button>
+        <button class="btn btn-wa" style="flex:1;" data-comprar="${c.id}">Comprar</button>
+      </div>`
+    : `<button class="btn btn-primary btn-block" data-reservar="${c.id}">Reservar</button>`;
   return `
     <div class="gallery-card">
       ${swatch}
@@ -1746,7 +1837,7 @@ function galleryCard(c){
         <h4>${esc(c.nombre)}</h4>
         <p>${esc(c.descripcion||'')}</p>
         <span class="pill ${av.disponible?'pill-green':'pill-warn'}">${availLabel}</span>
-        <button class="btn btn-primary btn-block" data-reservar="${c.id}">Reservar</button>
+        ${botones}
       </div>
     </div>
   `;
@@ -1772,10 +1863,11 @@ function openReservarModal(cartelId){
   if (!cartel) return;
   const cfg = getConfig();
   const av = cartelAvailability(cartelId);
+  const accionLabel = av.disponible ? 'Alquilar' : 'Reservar';
   let tipo = 'dia';
 
   openModal(`
-    ${modalHead('Reservar: ' + cartel.nombre)}
+    ${modalHead(accionLabel + ': ' + cartel.nombre)}
     <p style="margin:-6px 0 14px; font-size:12.5px; color:var(--ink-dim);">${av.disponible ? 'Este cartel está disponible hoy.' : (av.dias==null ? 'Consultanos la disponibilidad exacta.' : `Disponible en ${av.dias} día${av.dias===1?'':'s'}${av.fecha? ' (desde el '+fmtDate(av.fecha)+')':''}.`)}</p>
     <div class="field"><label>Tipo de alquiler</label>
       <div class="field-chips" id="r-tipo-chips">${PLAN_TIPOS.map(p=>`<button type="button" class="field-chip ${p.id==='dia'?'sel':''}" data-tipo="${p.id}">${p.label}</button>`).join('')}</div>
@@ -1808,7 +1900,7 @@ function openReservarModal(cartelId){
       const freqBtn = document.querySelector('#r-freq-chips .field-chip.sel');
       const meses = mesesBtn ? Number(mesesBtn.getAttribute('data-meses')) : 3;
       const freq = freqBtn ? Number(freqBtn.getAttribute('data-freq')) : 15;
-      return { total: meses * (cfg.precioMembresiaMes||0), label: `Membresía ${meses} ${meses===1?'mes':'meses'} (cambio cada ${freq} días)` };
+      return { total: meses * (cfg.precioMembresiaMes||0), label: `Plan Vidriera Dinámica · ${meses} ${meses===1?'mes':'meses'} (cambio cada ${freq} días)` };
     }
     return { total: cfg.especialPrecio||0, label: cfg.especialNombre || 'Alquiler especial' };
   }
@@ -1852,7 +1944,7 @@ function openReservarModal(cartelId){
     const direccion = document.getElementById('r-direccion').value.trim();
     if (!nombre || !direccion){ document.getElementById('r-err').textContent = 'Completá tu nombre y dirección.'; return; }
     const sel = currentSelection();
-    const msg = `¡Hola! Quiero reservar un cartel de Puelo Neón 💚\n\n`+
+    const msg = `¡Hola! Quiero ${accionLabel.toLowerCase()} un cartel de Puelo Neón 💚\n\n`+
       `*Nombre:* ${nombre}\n`+
       `*Dirección:* ${direccion}\n`+
       `*Cartel:* ${cartel.nombre} (${cartel.tematica})\n`+
@@ -2318,7 +2410,7 @@ async function finishSub(id){
 }
 
 /* ============================== DELETE CONFIRM ============================== */
-const DELETE_LABEL = { clientes: 'cliente', carteles: 'cartel', alquileres: 'alquiler', suscripciones: 'suscripción' };
+const DELETE_LABEL = { clientes: 'cliente', carteles: 'cartel', alquileres: 'alquiler', suscripciones: 'suscripción', fotos_trabajos: 'foto', fotos_clientes: 'foto' };
 function confirmDelete(col, id){
   openModal(`
     ${modalHead('¿Eliminar ' + DELETE_LABEL[col] + '?')}
@@ -2399,10 +2491,21 @@ document.addEventListener('click', (e) => {
   const reservarBtn = e.target.closest('[data-reservar]');
   if (reservarBtn){ openReservarModal(reservarBtn.getAttribute('data-reservar')); return; }
 
-  const lightboxBtn = e.target.closest('[data-lightbox-cartel]');
+  const comprarBtn = e.target.closest('[data-comprar]');
+  if (comprarBtn){
+    const c = getDoc('carteles', comprarBtn.getAttribute('data-comprar'));
+    if (c){
+      const msg = `¡Hola! Quiero comprar el cartel "${c.nombre}" (${c.tematica}) de Puelo Neón. ¿Me pasás precio y detalles?`;
+      window.open(waLink(WHATSAPP_RESERVAS, msg), '_blank', 'noopener');
+    }
+    return;
+  }
+
+  const lightboxBtn = e.target.closest('[data-lightbox-photo]');
   if (lightboxBtn){
-    const cc = getDoc('carteles', lightboxBtn.getAttribute('data-lightbox-cartel'));
-    if (cc && cc.imagen) openLightbox(cc.imagen);
+    const [col, pid] = lightboxBtn.getAttribute('data-lightbox-photo').split('|');
+    const doc = getDoc(col, pid);
+    if (doc && doc.imagen) openLightbox(doc.imagen);
     return;
   }
 
