@@ -450,7 +450,10 @@
   .gallery-social a:hover { color: var(--green); border-color: var(--green-soft); }
 
   /* ---------- Hero con fondo rotativo y elementos libres ---------- */
-  .hero-wrap { position: relative; overflow: hidden; min-height: 400px; background: #08110d; }
+  .hero-wrap { position: relative; overflow: hidden; background: #08110d; height: 64vh; min-height: 460px; max-height: 620px; }
+  @media (max-width: 900px) {
+    .hero-wrap { height: 100vh; height: 100dvh; min-height: 0; max-height: none; }
+  }
   .hero-bg { position: absolute; inset: 0; z-index: 0; }
   .hero-bg img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 1.4s ease; }
   .hero-bg img.active { opacity: .32; }
@@ -458,15 +461,22 @@
   .hero-back { position: absolute; z-index: 2; top: calc(14px + env(safe-area-inset-top,0px)); right: 16px; }
   .hero-stage { position: absolute; inset: 0; z-index: 1; }
   .hero-el { position: absolute; transform: translate(-50%,-50%); text-align: center; max-width: 92%; }
+  .hero-logo-img { width: 100%; height: auto; max-height: 32vh; object-fit: contain; display: block; }
   .hero-pill-text { display: inline-flex; align-items: center; gap: 6px; background: rgba(77,255,163,.14); border: 1px solid var(--green-soft); padding: 7px 15px; border-radius: 20px; white-space: nowrap; }
   .hero-plain-text { white-space: pre-wrap; line-height: 1.25; font-family: var(--font-display); }
+  .hero-scrolldown {
+    position: absolute; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom,0px)); transform: translateX(-50%);
+    z-index: 2; color: rgba(255,255,255,.6); animation: hero-bob 1.8s ease-in-out infinite;
+  }
+  .hero-scrolldown svg { width: 22px; height: 22px; transform: rotate(90deg); }
+  @keyframes hero-bob { 0%,100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(7px); } }
 
   .gallery-video { max-width: 720px; margin: 0 auto 8px; padding: 0 20px; }
   .gallery-video .frame { position: relative; padding-top: 56.25%; border-radius: 14px; overflow: hidden; border: 1px solid var(--panel-border-soft); }
   .gallery-video iframe, .gallery-video video { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: #000; }
 
   /* ---------- Editor visual de portada (arrastrar/soltar) ---------- */
-  .hero-editor-canvas { position: relative; width: 100%; aspect-ratio: 3 / 4; max-height: 58vh; border-radius: 14px; overflow: hidden; background: #08110d; border: 1px solid var(--panel-border); background-size: cover; background-position: center; }
+  .hero-editor-canvas { position: relative; width: 100%; max-width: 320px; margin: 0 auto; aspect-ratio: 9 / 18.5; max-height: 58vh; border-radius: 22px; overflow: hidden; background: #08110d; border: 1px solid var(--panel-border); background-size: cover; background-position: center; }
   .hero-el.editable { position: absolute; transform: translate(-50%,-50%); cursor: grab; touch-action: none; padding: 2px; }
   .hero-el.editable.dragging { cursor: grabbing; }
   .hero-el.editable:hover, .hero-el.editable:focus-within { outline: 1px dashed var(--green-soft); outline-offset: 6px; }
@@ -1213,7 +1223,7 @@ function videoEmbedHtml(url){
 function heroElementHtml(el){
   if (el.tipo === 'logo'){
     const src = el.imagen || LOGO_DATA_URL;
-    return `<div class="hero-el" style="left:${el.x}%; top:${el.y}%; width:${el.w}%;"><img src="${src}" style="width:100%; display:block;" alt="Puelo Neón"></div>`;
+    return `<div class="hero-el" style="left:${el.x}%; top:${el.y}%; width:${el.w}%;"><img src="${src}" class="hero-logo-img" alt="Puelo Neón"></div>`;
   }
   const textStyle = `font-size:clamp(12px, ${el.fontSizeVw}vw, ${el.maxPx||34}px); color:${el.color||'#f3fff8'}; font-weight:${el.bold?800:600};`;
   const cls = el.pill ? 'hero-pill-text' : 'hero-plain-text';
@@ -1232,6 +1242,7 @@ function renderHeroBlock(portada, opts){
       ${bgHtml}
       ${opts.showBack ? `<button class="btn btn-ghost btn-sm hero-back" data-gate="salir">Volver</button>` : ''}
       <div class="hero-stage">${elementos.map(heroElementHtml).join('')}</div>
+      ${opts.showBack ? `<div class="hero-scrolldown">${ICON.chevr}</div>` : ''}
     </div>
   `;
 }
@@ -1339,7 +1350,7 @@ function openHeroEditorModal(){
       const src = el.imagen || LOGO_DATA_URL;
       return `
         <div class="hero-el editable" data-el-id="${el.id}" style="left:${el.x}%; top:${el.y}%; width:${el.w}%;">
-          <img src="${src}" style="width:100%; display:block; pointer-events:none;" alt="Logo">
+          <img src="${src}" class="hero-logo-img" style="pointer-events:none;" alt="Logo">
           <div class="hero-el-actions">
             <label class="hero-el-btn" title="Cambiar imagen del logo">${ICON.upload}<input type="file" accept="image/*" class="visually-hidden" data-el-logo-input></label>
           </div>
