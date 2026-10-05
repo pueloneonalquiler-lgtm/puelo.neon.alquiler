@@ -493,17 +493,45 @@
   /* ---------- Negocio: presupuestos / stock / gastos ---------- */
   .breakdown-row { display: flex; justify-content: space-between; font-size: 13px; color: var(--ink-dim); padding: 3px 0; }
 
-  /* ---------- Botones flotantes (galería) ---------- */
-  .floating-btns {
-    position: fixed; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom,0px)); z-index: 45;
-    display: flex; flex-direction: column; gap: 10px; align-items: flex-end;
+  /* ---------- Pantalla de bienvenida (splash) ---------- */
+  #splash-screen { display: none; }
+  #splash-screen.active { display: block; position: fixed; inset: 0; z-index: 90; }
+  .splash-overlay { position: fixed; inset: 0; z-index: 300; cursor: pointer; }
+  .splash {
+    position: absolute; inset: 0; overflow: hidden;
+    background: radial-gradient(900px 640px at 50% 28%, #0d2115 0%, #070c09 68%);
+    transition: opacity .4s ease;
   }
+  .splash.out { opacity: 0; pointer-events: none; }
+  .splash-stage {
+    position: absolute; top: 0; bottom: 0; left: 50%; width: min(100%, 520px); transform: translateX(-50%);
+    container-type: inline-size; animation: splash-fade .8s ease both;
+  }
+  .splash-loader { position: absolute; left: 0; right: 0; bottom: calc(48px + env(safe-area-inset-bottom,0px)); display: flex; justify-content: center; }
+  .splash-hint { position: absolute; left: 0; right: 0; top: calc(14px + env(safe-area-inset-top,0px)); text-align: center; font-size: 12px; color: var(--ink-faint); }
+  .splash-preview-box { position: relative; height: 440px; max-width: 280px; border-radius: 22px; overflow: hidden; border: 1px solid var(--panel-border); cursor: pointer; }
+  .spinner { width: 34px; height: 34px; border-radius: 50%; border: 3px solid rgba(77,255,163,.18); border-top-color: var(--green); animation: spin .9s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes splash-fade { from { opacity: 0; } to { opacity: 1; } }
+
+  /* ---------- Botones flotantes (galería) ---------- */
+  .floating-layer { position: fixed; inset: 0; z-index: 45; pointer-events: none; }
   .floating-btn {
-    display: inline-flex; align-items: center; gap: 7px; padding: 11px 18px; border-radius: 30px;
-    background: var(--green); color: #06170f; font-weight: 800; font-size: 13px; border: none; cursor: pointer;
+    position: absolute; pointer-events: auto;
+    display: inline-flex; align-items: center; gap: .5em; font-size: 13px; padding: .85em 1.4em; border-radius: 30px;
+    background: var(--green); color: #06170f; font-weight: 800; border: none; cursor: pointer;
     white-space: nowrap; box-shadow: 0 10px 28px rgba(0,0,0,.45), 0 0 18px rgba(77,255,163,.35);
   }
-  .floating-btn:active { transform: scale(.96); }
+  .floating-btn:active { filter: brightness(.9); }
+  .fb-preview { position: static !important; }
+
+  /* ---------- Botón compartir página (panel admin) ---------- */
+  #share-slot { margin: 4px 0 12px; }
+  .share-btn { width: 100%; }
+  @media (max-width: 900px) {
+    #share-slot { margin: 0 0 0 auto; }
+    .share-btn { width: auto; padding: 8px 12px; font-size: 12px; }
+  }
 
   .gallery-video { max-width: 720px; margin: 0 auto 8px; padding: 0 20px; }
   .gallery-video .frame { position: relative; padding-top: 56.25%; border-radius: 14px; overflow: hidden; border: 1px solid var(--panel-border-soft); }
@@ -537,6 +565,7 @@
       <div class="brand-text"><b>PUELO NEÓN</b><span>Panel de alquiler</span></div>
     </div>
     <nav class="mainnav" id="mainnav"></nav>
+    <div id="share-slot"></div>
     <div class="sidebar-foot">Puelo Neón <span class="dot">·</span> Alquiler de carteles
       <div style="margin-top:6px;"><button data-logout="1" style="background:none;border:none;color:var(--ink-faint);text-decoration:underline;cursor:pointer;font-size:11px;padding:0;">Cerrar sesión</button></div>
     </div>
@@ -548,6 +577,7 @@
 <nav class="bottomnav" id="bottomnav"></nav>
 <div id="modal-root"></div>
 <div id="toast"></div>
+<div id="splash-screen"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
@@ -646,6 +676,16 @@ const PLAN_TIPOS = [
   { id: 'especial', label: 'Alquiler especial' },
 ];
 const DEFAULT_CONFIG = { precioDia: 0, precioMensualFijo: 0, precioMembresiaMes: 0, especialNombre: 'Alquiler especial', especialDescripcion: '', especialPrecio: 0 };
+const DEFAULT_SPLASH = {
+  activo: true,
+  duracion: 3,
+  elementos: [
+    { id: 'logo', tipo: 'logo', x: 50, y: 33, w: 46, imagen: null },
+    { id: 'titulo', tipo: 'texto', x: 50, y: 60, fontSizeVw: 10, maxPx: 44, texto: 'Bienvenido', color: '#f3fff8', bold: true, pill: false },
+    { id: 'subtitulo', tipo: 'texto', x: 50, y: 69, fontSizeVw: 4.6, maxPx: 18, texto: '¿Qué evento o vidriera querés destacar hoy?', color: '#8fab9d', bold: false, pill: false },
+  ],
+};
+const SITE_URL_DEFAULT = 'https://pueloneonalquiler.vercel.app';
 const DEFAULT_PORTADA = {
   fondos: [],
   videoUrl: '',
@@ -679,6 +719,11 @@ let tab = 'dashboard';
 let search = '';
 let catFilter = 'Todos';
 let seedChecked = false;
+let dataLoaded = false;
+let splashActive = false;
+let splashDone = false;
+let splashTimer = null;
+let directClient = false;
 
 let screen = 'gate'; // 'gate' | 'client' | 'admin'
 const state = { clientes: {}, carteles: {}, alquileres: {}, suscripciones: {}, config: {}, temas: {}, estilos: {}, personalizados: {}, fotos_trabajos: {}, fotos_clientes: {}, materiales: {}, ventas: {}, gastos: {}, proveedores: {}, botones_flotantes: {} };
@@ -773,13 +818,15 @@ async function initData(){
 
 async function initSupabase(){
   sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  for (const col of COLS){
-    const { data, error } = await sbClient.from(SUPABASE_TABLE).select('id,data').eq('collection', col);
-    if (error) throw error;
+  const results = await Promise.all(COLS.map(col =>
+    sbClient.from(SUPABASE_TABLE).select('id,data').eq('collection', col)
+  ));
+  results.forEach((res, i) => {
+    if (res.error) throw res.error;
     const map = {};
-    (data || []).forEach(r => { map[r.id] = r.data; });
-    state[col] = map;
-  }
+    (res.data || []).forEach(r => { map[r.id] = r.data; });
+    state[COLS[i]] = map;
+  });
   afterFirstLoad();
   render();
 
@@ -849,6 +896,8 @@ async function deleteDoc(col, id){
 }
 
 function afterFirstLoad(){
+  dataLoaded = true;
+  cacheSplash();
   if (seedChecked) return;
   seedChecked = true;
   if (arr('temas').length === 0) TEMAS_SEED.forEach(t => writeDoc('temas', uid(), t));
@@ -1110,9 +1159,9 @@ function render(){
 function setScreen(s){
   screen = s;
   document.body.setAttribute('data-screen', s);
-  if (s !== 'client') stopHeroCarousel();
+  if (s !== 'client'){ stopHeroCarousel(); hideSplashNow(); }
   if (s === 'gate') renderGateScreen();
-  else if (s === 'client') renderClientScreen();
+  else if (s === 'client'){ renderClientScreen(); maybeStartSplash(); }
   else if (s === 'admin') render();
 }
 
@@ -1143,6 +1192,7 @@ function renderAdminMain(){
 function renderLoading(){
   return `<div style="padding:80px 0; text-align:center; color:var(--ink-dim);">
     <div style="font-family:var(--font-display); color:var(--green); font-size:15px; letter-spacing:.02em;">Cargando Puelo Neón…</div>
+    <div class="spinner" style="margin:18px auto 0;"></div>
   </div>`;
 }
 
@@ -1154,6 +1204,8 @@ function renderNav(){
     return `<button class="navitem ${tab===n.id?'active':''}" data-nav="${n.id}">${n.icon}<span>${n.label}</span>${badge}</button>`;
   }).join('');
   document.getElementById('mainnav').innerHTML = navHtml;
+  const shareSlot = document.getElementById('share-slot');
+  if (shareSlot) shareSlot.innerHTML = `<button class="btn btn-wa share-btn" data-open="compartir-pagina">${ICON.wa}<span>Compartir página</span></button>`;
 
   const bnHtml = NAV.map(n => {
     const badge = n.id === 'recordatorios' && rem.length ? '<span class="bnbadge"></span>' : '';
@@ -1290,13 +1342,15 @@ function clienteRow(c){
 /* ============================== CATÁLOGO ============================== */
 function renderCatalogo(){
   let list = arr('carteles');
-  if (catFilter !== 'Todos') list = list.filter(c => c.tematica === catFilter);
+  const VENTA_CHIP = '🏷️ A la venta hoy';
+  if (catFilter === VENTA_CHIP) list = list.filter(c => c.enVenta);
+  else if (catFilter !== 'Todos') list = list.filter(c => c.tematica === catFilter);
   if (search.trim()){
     const q = search.trim().toLowerCase();
     list = list.filter(c => (c.nombre||'').toLowerCase().includes(q) || (c.tematica||'').toLowerCase().includes(q));
   }
   list.sort((a,b)=> (a.nombre||'').localeCompare(b.nombre||''));
-  const temasUsados = ['Todos', ...temaList().map(t=>t.nombre)];
+  const temasUsados = ['Todos', VENTA_CHIP, ...temaList().map(t=>t.nombre)];
 
   return `
     <div class="page-head">
@@ -1332,7 +1386,7 @@ function cartelCard(c){
     ${swatch}
     <h4>${esc(c.nombre||'Sin nombre')}</h4>
     <p>${esc(c.descripcion||'Sin descripción.')}</p>
-    <div class="foot">${estadoPill}<span class="price">${c.precio ? fmtMoney(c.precio) : ''}</span></div>
+    <div class="foot"><span style="display:flex; gap:5px; flex-wrap:wrap;">${estadoPill}${c.enVenta ? '<span class="pill pill-mute">🏷️ A la venta</span>' : ''}</span><span class="price">${c.precio ? fmtMoney(c.precio) : ''}</span></div>
   </div>`;
 }
 
@@ -1442,6 +1496,84 @@ function getPortada(){
   return merged;
 }
 
+/* ============================== PANTALLA DE BIENVENIDA (splash) ============================== */
+function getSplash(){
+  let raw = getDoc('config','splash');
+  if (!raw){
+    try { const c = localStorage.getItem('pueloneon_splash_cache'); if (c) raw = JSON.parse(c); } catch(e){}
+  }
+  raw = raw || {};
+  const merged = Object.assign({}, DEFAULT_SPLASH, raw);
+  if (!raw.elementos || !raw.elementos.length){
+    // migra el formato anterior (titulo / subtitulo / logo) al editor visual
+    const els = JSON.parse(JSON.stringify(DEFAULT_SPLASH.elementos));
+    const logoEl = els.find(e => e.id === 'logo');
+    const tEl = els.find(e => e.id === 'titulo');
+    const sEl = els.find(e => e.id === 'subtitulo');
+    if (raw.logo) logoEl.imagen = raw.logo;
+    if (raw.titulo) tEl.texto = raw.titulo;
+    if (raw.subtitulo) sEl.texto = raw.subtitulo;
+    merged.elementos = els;
+  }
+  return merged;
+}
+function cacheSplash(){
+  const raw = getDoc('config','splash');
+  if (!raw) return;
+  try { localStorage.setItem('pueloneon_splash_cache', JSON.stringify(raw)); } catch(e){}
+}
+function splashHtml(cfg, opts){
+  opts = opts || {};
+  const elementos = (cfg.elementos && cfg.elementos.length) ? cfg.elementos : DEFAULT_SPLASH.elementos;
+  return `
+    <div class="splash">
+      <div class="splash-stage">${elementos.map(heroElementHtml).join('')}</div>
+      <div class="splash-loader"><div class="spinner"></div></div>
+      ${opts.hint ? `<div class="splash-hint">${opts.hint}</div>` : ''}
+    </div>`;
+}
+function maybeStartSplash(){
+  if (splashDone || splashActive) return;
+  const cfg = getSplash();
+  const minMs = cfg.activo === false ? 0 : Math.max(1, Number(cfg.duracion) || 3) * 1000;
+  if (minMs === 0 && dataLoaded){ splashDone = true; return; }
+  const host = document.getElementById('splash-screen');
+  if (!host) return;
+  host.innerHTML = splashHtml(cfg);
+  host.classList.add('active');
+  splashActive = true;
+  const t0 = Date.now();
+  clearInterval(splashTimer);
+  splashTimer = setInterval(() => {
+    const elapsed = Date.now() - t0;
+    if ((elapsed >= minMs && dataLoaded) || elapsed >= 15000) finishSplash();
+  }, 150);
+}
+function finishSplash(){
+  clearInterval(splashTimer); splashTimer = null;
+  splashActive = false; splashDone = true;
+  const host = document.getElementById('splash-screen');
+  if (!host) return;
+  const root = host.querySelector('.splash');
+  if (root) root.classList.add('out');
+  setTimeout(() => { host.classList.remove('active'); host.innerHTML = ''; }, 450);
+}
+function hideSplashNow(){
+  clearInterval(splashTimer); splashTimer = null; splashActive = false;
+  const host = document.getElementById('splash-screen');
+  if (host){ host.classList.remove('active'); host.innerHTML = ''; }
+}
+function previewSplash(cfg){
+  const old = document.getElementById('splash-preview');
+  if (old) old.remove();
+  const d = document.createElement('div');
+  d.id = 'splash-preview';
+  d.className = 'splash-overlay';
+  d.innerHTML = splashHtml(cfg, { hint: 'Vista previa · tocá la pantalla para cerrar' });
+  d.onclick = () => d.remove();
+  document.body.appendChild(d);
+}
+
 let heroCarouselTimer = null;
 function stopHeroCarousel(){ if (heroCarouselTimer){ clearInterval(heroCarouselTimer); heroCarouselTimer = null; } }
 function startHeroCarousel(){
@@ -1490,7 +1622,7 @@ function renderHeroBlock(portada, opts){
       ${bgHtml}
       ${opts.showBack ? `<button class="btn btn-ghost btn-sm hero-back" data-gate="salir">Volver</button>` : ''}
       <div class="hero-stage">${elementos.map(heroElementHtml).join('')}</div>
-      ${opts.showBack ? `<div class="hero-scrolldown">${ICON.chevr}</div>` : ''}
+      ${opts.scrollHint ? `<div class="hero-scrolldown">${ICON.chevr}</div>` : ''}
     </div>
   `;
 }
@@ -1589,13 +1721,14 @@ function openPreciosForm(){
 /* ============================== PORTADA (admin) ============================== */
 function renderPortada(){
   const p = getPortada();
+  const sp = getSplash();
   const fondos = p.fondos || [];
   return `
     <div class="page-head">
-      <div><h1>Portada de la galería</h1><p class="sub">Así se arma la pantalla de bienvenida que ven tus clientes: logo, fotos de fondo y textos. Arrastrá para acomodar cada elemento a tu gusto.</p></div>
+      <div><h1>Portada de la galería</h1><p class="sub">Así se arma la pantalla principal que ven tus clientes: logo, fotos de fondo, textos y botones flotantes. Arrastrá para acomodar cada elemento a tu gusto.</p></div>
       <div style="display:flex; gap:8px; flex-wrap:wrap;">
         <button class="btn btn-ghost" data-open="portada-imagenes">${ICON.image}Imágenes de fondo</button>
-        <button class="btn btn-ghost" data-open="portada-botones">${ICON.sparkle}Botones flotantes</button>
+        <button class="btn btn-ghost" data-open="portada-splash">${ICON.layout}Pantalla de bienvenida</button>
         <button class="btn btn-primary" data-open="portada-editor">${ICON.edit}Editar diseño</button>
       </div>
     </div>
@@ -1607,17 +1740,55 @@ function renderPortada(){
     <div class="section-title" style="margin-top:26px;">Fotos de fondo cargadas ${fondos.length?`<span class="pill pill-mute">${fondos.length}</span>`:''}</div>
     ${fondos.length===0 ? `<div class="empty"><b>Todavía no subiste fotos</b>Agregalas desde el botón "Imágenes de fondo" para que vayan pasando detrás del logo.</div>` :
       `<p class="sub">Se van alternando automáticamente cada pocos segundos en la galería del cliente.</p>`}
+
+    <div class="section-title" style="margin-top:34px;"><span>Pantalla de bienvenida <span class="pill pill-mute">${sp.activo !== false ? 'Activada' : 'Apagada'}</span></span>
+      <button class="btn btn-primary btn-sm" data-open="portada-splash">${ICON.edit}Editar</button></div>
+    <p class="sub" style="margin:0 0 12px;">Es lo primero que ve el cliente al entrar, unos segundos mientras se carga la galería. Acá la ves fija para que puedas editarla con calma. Tocala para editarla.</p>
+    <div class="splash-preview-box" data-open="portada-splash">${splashHtml(sp)}</div>
   `;
 }
 
-/* ---- Editor visual de portada: arrastrar, redimensionar, agregar textos ---- */
-function openHeroEditorModal(){
-  const portadaActual = getPortada();
-  let elementos = JSON.parse(JSON.stringify(portadaActual.elementos && portadaActual.elementos.length ? portadaActual.elementos : DEFAULT_PORTADA.elementos));
-  const fondoPreview = (portadaActual.fondos && portadaActual.fondos[0]) || '';
-  let fondoOpacidad = portadaActual.fondoOpacidad != null ? portadaActual.fondoOpacidad : DEFAULT_PORTADA.fondoOpacidad;
+/* ---- Editor visual (portada y pantalla de bienvenida): arrastrar, redimensionar, agregar textos y botones ---- */
+const FB_TIPOS = [
+  { id: 'whatsapp', label: 'Mensaje de WhatsApp' },
+  { id: 'categoria', label: 'Ir a una sección' },
+  { id: 'personalizado', label: 'Abrir cartel personalizado' },
+];
+
+function fbPosition(b, idx){
+  if (b.x != null && b.y != null) return { x: Number(b.x), y: Number(b.y) };
+  return { x: 96, y: Math.max(8, 96 - idx * 9) };
+}
+function fbValorHtml(tipo, valor){
+  if (tipo === 'whatsapp'){
+    return `<div class="field"><label>Mensaje de WhatsApp</label><input type="text" id="fe-valor" value="${esc(valor||'')}" placeholder="Ej: Hola, quiero consultar por descuentos"></div>`;
+  }
+  if (tipo === 'categoria'){
+    const opts = ['A la venta hoy'].concat(temaList().map(t => t.nombre));
+    return `<div class="field"><label>Sección</label><select id="fe-valor">${opts.map(n => `<option value="${esc(n)}" ${n===valor?'selected':''}>${esc(n)}</option>`).join('')}</select></div>`;
+  }
+  return '';
+}
+
+function openHeroEditorModal(){ openVisualEditor('portada'); }
+function openSplashEditorModal(){ openVisualEditor('splash'); }
+
+function openVisualEditor(kind){
+  const isSplash = kind === 'splash';
+  const cfgActual = isSplash ? getSplash() : getPortada();
+  const baseEls = (cfgActual.elementos && cfgActual.elementos.length) ? cfgActual.elementos : (isSplash ? DEFAULT_SPLASH : DEFAULT_PORTADA).elementos;
+  let elementos = JSON.parse(JSON.stringify(baseEls));
+  let fbs = isSplash ? [] : arr('botones_flotantes').sort((a,b)=>(a.orden||0)-(b.orden||0)).map((b,i) => Object.assign({}, b, fbPosition(b, i)));
+  const fbExisting = new Set(fbs.map(b => b.id));
+  let fbRemoved = [];
+  const fondoPreview = (!isSplash && cfgActual.fondos && cfgActual.fondos[0]) || '';
+  let fondoOpacidad = !isSplash ? (cfgActual.fondoOpacidad != null ? cfgActual.fondoOpacidad : DEFAULT_PORTADA.fondoOpacidad) : 0;
+  let videoUrl = !isSplash ? (cfgActual.videoUrl || '') : '';
+  let activo = isSplash ? cfgActual.activo !== false : true;
+  let duracion = isSplash ? (Number(cfgActual.duracion) || 3) : 3;
   let mode = 'canvas';
   let editingId = null;
+  let editingFbId = null;
 
   function clampNum(v, min, max){ return Math.max(min, Math.min(max, v)); }
 
@@ -1646,11 +1817,58 @@ function openHeroEditorModal(){
       </div>`;
   }
 
+  function fbEditableHtml(b){
+    return `
+      <div class="hero-el editable fb-el" data-fb-id="${b.id}" style="left:${b.x}%; top:${b.y}%; transform:translate(-${b.x}%, -${b.y}%);">
+        <div class="floating-btn fb-preview" style="font-size:3.4cqw; pointer-events:none;">${b.emoji?esc(b.emoji)+' ':''}${esc(b.texto)}</div>
+        <div class="hero-el-actions">
+          <button type="button" class="hero-el-btn" data-fb-edit title="Editar botón">${ICON.edit}</button>
+          <button type="button" class="hero-el-btn" data-fb-del title="Eliminar botón">${ICON.trash}</button>
+        </div>
+      </div>`;
+  }
+
   function canvasHtml(){
-    const topA = Math.max(0.15, 0.55 - fondoOpacidad*0.3);
-    const botA = Math.max(0.55, 0.95 - fondoOpacidad*0.3);
-    const bgStyle = fondoPreview ? `background-image: linear-gradient(180deg, rgba(7,12,9,${topA}), rgba(7,12,9,${botA})), url('${fondoPreview}');` : '';
-    return `<div class="hero-editor-canvas" id="hero-canvas" style="${bgStyle}">${elementos.map(elEditableHtml).join('')}</div>`;
+    let bgStyle = '';
+    if (isSplash){
+      bgStyle = 'background: radial-gradient(900px 640px at 50% 28%, #0d2115 0%, #070c09 68%);';
+    } else if (fondoPreview){
+      const topA = Math.max(0.15, 0.55 - fondoOpacidad*0.3);
+      const botA = Math.max(0.55, 0.95 - fondoOpacidad*0.3);
+      bgStyle = `background-image: linear-gradient(180deg, rgba(7,12,9,${topA}), rgba(7,12,9,${botA})), url('${fondoPreview}');`;
+    }
+    return `<div class="hero-editor-canvas" id="hero-canvas" style="${bgStyle}">${elementos.map(elEditableHtml).join('')}${fbs.map(fbEditableHtml).join('')}</div>`;
+  }
+
+  function bindDrag(canvas, div, obj, edgeAware){
+    div.addEventListener('pointerdown', (e) => {
+      if (e.target.closest('[data-resize-handle]') || e.target.closest('.hero-el-btn')) return;
+      e.preventDefault();
+      try { div.setPointerCapture(e.pointerId); } catch(err){}
+      const rect = canvas.getBoundingClientRect();
+      const denomW = edgeAware ? Math.max(1, rect.width - div.offsetWidth) : rect.width;
+      const denomH = edgeAware ? Math.max(1, rect.height - div.offsetHeight) : rect.height;
+      const lo = edgeAware ? 2 : 3, hi = edgeAware ? 98 : 97;
+      const startX = e.clientX, startY = e.clientY;
+      const origX = obj.x, origY = obj.y;
+      div.classList.add('dragging');
+      function move(ev){
+        obj.x = clampNum(origX + (ev.clientX - startX) / denomW * 100, lo, hi);
+        obj.y = clampNum(origY + (ev.clientY - startY) / denomH * 100, lo, hi);
+        div.style.left = obj.x + '%';
+        div.style.top = obj.y + '%';
+        if (edgeAware) div.style.transform = `translate(-${obj.x}%, -${obj.y}%)`;
+      }
+      function up(){
+        div.removeEventListener('pointermove', move);
+        div.removeEventListener('pointerup', up);
+        div.removeEventListener('pointercancel', up);
+        div.classList.remove('dragging');
+      }
+      div.addEventListener('pointermove', move);
+      div.addEventListener('pointerup', up);
+      div.addEventListener('pointercancel', up);
+    });
   }
 
   function bindCanvasEvents(){
@@ -1659,33 +1877,7 @@ function openHeroEditorModal(){
     elementos.forEach(el => {
       const div = canvas.querySelector(`[data-el-id="${el.id}"]`);
       if (!div) return;
-
-      div.addEventListener('pointerdown', (e) => {
-        if (e.target.closest('[data-resize-handle]') || e.target.closest('.hero-el-btn')) return;
-        e.preventDefault();
-        try { div.setPointerCapture(e.pointerId); } catch(err){}
-        const rect = canvas.getBoundingClientRect();
-        const startX = e.clientX, startY = e.clientY;
-        const origX = el.x, origY = el.y;
-        div.classList.add('dragging');
-        function move(ev){
-          const dxPct = (ev.clientX - startX) / rect.width * 100;
-          const dyPct = (ev.clientY - startY) / rect.height * 100;
-          el.x = clampNum(origX + dxPct, 3, 97);
-          el.y = clampNum(origY + dyPct, 3, 97);
-          div.style.left = el.x + '%';
-          div.style.top = el.y + '%';
-        }
-        function up(){
-          div.removeEventListener('pointermove', move);
-          div.removeEventListener('pointerup', up);
-          div.removeEventListener('pointercancel', up);
-          div.classList.remove('dragging');
-        }
-        div.addEventListener('pointermove', move);
-        div.addEventListener('pointerup', up);
-        div.addEventListener('pointercancel', up);
-      });
+      bindDrag(canvas, div, el, false);
 
       const handle = div.querySelector('[data-resize-handle]');
       if (handle){
@@ -1733,43 +1925,153 @@ function openHeroEditorModal(){
         };
       }
     });
+
+    fbs.forEach(b => {
+      const div = canvas.querySelector(`[data-fb-id="${b.id}"]`);
+      if (!div) return;
+      bindDrag(canvas, div, b, true);
+      const eb = div.querySelector('[data-fb-edit]');
+      if (eb) eb.onclick = () => { editingFbId = b.id; mode = 'fb-edit'; paint(); };
+      const db = div.querySelector('[data-fb-del]');
+      if (db) db.onclick = () => {
+        fbs = fbs.filter(x => x.id !== b.id);
+        if (fbExisting.has(b.id)) fbRemoved.push(b.id);
+        paint();
+      };
+    });
   }
 
   function paint(){
     if (mode === 'canvas'){
-      openModal(`
-        ${modalHead('Editor visual de portada')}
-        <p style="margin:-6px 0 12px; font-size:12.5px; color:var(--ink-dim);">Arrastrá el logo o los textos para moverlos. Tirá del cuadradito verde (esquina inferior derecha) para agrandar o achicar.</p>
-        <div id="hero-canvas-wrap">${canvasHtml()}</div>
-        <button type="button" class="btn btn-ghost btn-sm" style="margin-top:12px;" id="hero-add-text">${ICON.plus}Agregar texto</button>
+      const titulo = isSplash ? 'Editor de pantalla de bienvenida' : 'Editor visual de portada';
+      const ayuda = isSplash
+        ? 'Es lo primero que ve el cliente al entrar. Arrastrá el logo y los textos para moverlos; tirá del cuadradito verde para agrandar o achicar. Acá no hay apuro: se queda así hasta que toques Guardar.'
+        : 'Arrastrá el logo, los textos y los botones flotantes (las píldoras verdes) para ubicarlos donde quieras. Tirá del cuadradito verde para agrandar o achicar.';
+      const extra = isSplash ? `
+        <div class="field" style="margin-top:14px;"><label><input type="checkbox" id="sp-activo" ${activo?'checked':''} style="width:auto; margin-right:6px; vertical-align:middle;">Mostrar la pantalla de bienvenida al entrar</label></div>
+        <div class="field"><label>Duración mínima: <b id="sp-dur-label">${duracion} s</b></label>
+          <input type="range" id="sp-duracion" min="1" max="10" step="1" value="${duracion}" style="width:100%;">
+          <div class="hint">Si la galería tarda más en cargar, la pantalla se queda hasta que esté lista.</div>
+        </div>
+        <button type="button" class="btn btn-ghost btn-sm" id="sp-preview">Ver cómo queda a pantalla completa</button>
+      ` : `
         <div class="field" style="margin-top:14px;">
           <label>Brillo de las fotos de fondo</label>
           <input type="range" id="hero-brillo" min="10" max="85" step="5" value="${Math.round(fondoOpacidad*100)}" style="width:100%;">
           <div class="hint">Más brillo hace que las fotos se vean más fuerte; menos brillo deja el texto más legible.</div>
         </div>
-        <div class="field"><label>Video de YouTube (opcional)</label><input type="text" id="hero-video" value="${esc(portadaActual.videoUrl||'')}" placeholder="https://youtube.com/watch?v=..."></div>
+        <div class="field"><label>Video de YouTube (opcional)</label><input type="text" id="hero-video" value="${esc(videoUrl)}" placeholder="https://youtube.com/watch?v=..."></div>
+      `;
+      openModal(`
+        ${modalHead(titulo)}
+        <p style="margin:-6px 0 12px; font-size:12.5px; color:var(--ink-dim);">${ayuda}</p>
+        <div id="hero-canvas-wrap">${canvasHtml()}</div>
+        <div style="display:flex; flex-direction:column; align-items:flex-start; gap:8px; margin-top:12px;">
+          <button type="button" class="btn btn-ghost btn-sm" id="hero-add-text">${ICON.plus}Agregar texto</button>
+          ${isSplash ? '' : `<button type="button" class="btn btn-ghost btn-sm" id="hero-add-fb">${ICON.plus}Agregar botón flotante</button>`}
+        </div>
+        ${extra}
         <div class="modal-actions">
           <button class="btn btn-ghost modal-close">Cancelar</button>
           <button class="btn btn-primary" id="hero-save">Guardar</button>
         </div>
       `, { wide: true });
       bindCanvasEvents();
-      document.getElementById('hero-brillo').oninput = (e) => {
-        fondoOpacidad = Number(e.target.value)/100;
-        document.getElementById('hero-canvas-wrap').innerHTML = canvasHtml();
-        bindCanvasEvents();
-      };
+
       document.getElementById('hero-add-text').onclick = () => {
         const nuevo = { id: uid(), tipo: 'texto', x: 50, y: 78, fontSizeVw: 4, maxPx: 18, texto: 'Nuevo texto', color: '#f3fff8', bold: false, pill: false };
         elementos.push(nuevo);
         editingId = nuevo.id; mode = 'edit'; paint();
       };
+
+      if (isSplash){
+        document.getElementById('sp-activo').onchange = (e) => { activo = e.target.checked; };
+        document.getElementById('sp-duracion').oninput = (e) => {
+          duracion = Number(e.target.value) || 3;
+          document.getElementById('sp-dur-label').textContent = duracion + ' s';
+        };
+        document.getElementById('sp-preview').onclick = () => previewSplash({ elementos, activo, duracion });
+      } else {
+        document.getElementById('hero-brillo').oninput = (e) => {
+          fondoOpacidad = Number(e.target.value)/100;
+          document.getElementById('hero-canvas-wrap').innerHTML = canvasHtml();
+          bindCanvasEvents();
+        };
+        document.getElementById('hero-video').oninput = (e) => { videoUrl = e.target.value; };
+        document.getElementById('hero-add-fb').onclick = () => {
+          const nuevo = { id: uid(), texto: '', emoji: '', tipo: 'whatsapp', valor: '', x: 96, y: Math.max(8, 96 - fbs.length * 9), isNew: true };
+          fbs.push(nuevo);
+          editingFbId = nuevo.id; mode = 'fb-edit'; paint();
+        };
+      }
+
       document.getElementById('hero-save').onclick = async () => {
-        const videoUrlVal = document.getElementById('hero-video').value.trim();
-        await patchDoc('config', 'portada', { elementos, videoUrl: videoUrlVal, fondoOpacidad });
+        if (isSplash){
+          await patchDoc('config', 'splash', { elementos, activo, duracion });
+          cacheSplash();
+          closeModal(); render();
+          showToast('Pantalla de bienvenida guardada');
+          return;
+        }
+        await patchDoc('config', 'portada', { elementos, videoUrl: videoUrl.trim(), fondoOpacidad });
+        for (const id of fbRemoved) await deleteDoc('botones_flotantes', id);
+        for (let i = 0; i < fbs.length; i++){
+          const b = fbs[i];
+          await writeDoc('botones_flotantes', b.id, {
+            texto: b.texto, emoji: b.emoji || '', tipo: b.tipo, valor: b.valor || '', orden: i,
+            x: Math.round(b.x * 10) / 10, y: Math.round(b.y * 10) / 10,
+          });
+        }
         closeModal(); render();
         showToast('Diseño de portada guardado');
       };
+
+    } else if (mode === 'fb-edit'){
+      const b = fbs.find(x => x.id === editingFbId);
+      if (!b){ mode = 'canvas'; paint(); return; }
+      let tipoSel = b.tipo || 'whatsapp';
+      openModal(`
+        ${modalHead(b.isNew ? 'Nuevo botón flotante' : 'Editar botón flotante')}
+        <div class="field-row">
+          <div class="field"><label>Emoji (opcional)</label><input type="text" id="fe-emoji" value="${esc(b.emoji||'')}" maxlength="4" placeholder="🎉"></div>
+          <div class="field"><label>Texto del botón</label><input type="text" id="fe-texto" value="${esc(b.texto||'')}" placeholder="Ej: Descuentos"></div>
+        </div>
+        <div class="field"><label>Acción al tocarlo</label>
+          <div class="field-chips" id="fe-tipo-chips">${FB_TIPOS.map(t => `<button type="button" class="field-chip ${t.id===tipoSel?'sel':''}" data-tipo="${t.id}">${t.label}</button>`).join('')}</div>
+        </div>
+        <div id="fe-valor-box">${fbValorHtml(tipoSel, b.valor)}</div>
+        <div class="err-msg" id="fe-err"></div>
+        <div class="modal-actions">
+          <button class="btn btn-ghost" id="fe-back">Volver</button>
+          <button class="btn btn-primary" id="fe-ok">Listo</button>
+        </div>
+      `);
+      document.querySelectorAll('#fe-tipo-chips .field-chip').forEach(ch => {
+        ch.onclick = () => {
+          document.querySelectorAll('#fe-tipo-chips .field-chip').forEach(x => x.classList.remove('sel'));
+          ch.classList.add('sel');
+          tipoSel = ch.getAttribute('data-tipo');
+          document.getElementById('fe-valor-box').innerHTML = fbValorHtml(tipoSel, '');
+        };
+      });
+      document.getElementById('fe-back').onclick = () => {
+        if (b.isNew) fbs = fbs.filter(x => x.id !== b.id);
+        mode = 'canvas'; paint();
+      };
+      document.getElementById('fe-ok').onclick = () => {
+        const texto = document.getElementById('fe-texto').value.trim();
+        if (!texto){ document.getElementById('fe-err').textContent = 'Poné un texto para el botón.'; return; }
+        const vEl = document.getElementById('fe-valor');
+        const valor = vEl ? vEl.value.trim() : '';
+        if (tipoSel !== 'personalizado' && !valor){ document.getElementById('fe-err').textContent = 'Completá la acción del botón.'; return; }
+        b.texto = texto;
+        b.emoji = document.getElementById('fe-emoji').value.trim();
+        b.tipo = tipoSel;
+        b.valor = valor;
+        delete b.isNew;
+        mode = 'canvas'; paint();
+      };
+
     } else {
       const el = elementos.find(x => x.id === editingId);
       if (!el){ mode = 'canvas'; paint(); return; }
@@ -1811,82 +2113,53 @@ function openHeroEditorModal(){
   paint();
 }
 
-/* ---- Botones flotantes (galería) ---- */
-function openBotonesFlotantesModal(){
-  const render2 = () => {
-    const list = arr('botones_flotantes').sort((a,b)=>(a.orden||0)-(b.orden||0));
-    openModal(`
-      ${modalHead('Botones flotantes')}
-      <p style="margin:-6px 0 14px; font-size:12.5px; color:var(--ink-dim);">Quedan fijos abajo a la derecha en toda la galería, incluso mientras el cliente hace scroll.</p>
-      <div class="list" style="margin-bottom:16px;">
-        ${list.length===0 ? '<div class="empty">Todavía no hay botones flotantes.</div>' : list.map(b => `
-          <div class="tema-manage-row">
-            <span style="font-size:16px;">${esc(b.emoji||'🔔')}</span>
-            <span class="nm">${esc(b.texto)}</span>
-            <button type="button" class="iconbtn" data-fb-del="${b.id}" title="Eliminar">${ICON.trash}</button>
-          </div>
-        `).join('')}
-      </div>
-      <div class="field-row">
-        <div class="field"><label>Emoji (opcional)</label><input type="text" id="fb-emoji" placeholder="🎉" maxlength="4"></div>
-        <div class="field"><label>Texto del botón</label><input type="text" id="fb-texto" placeholder="Ej: Descuentos"></div>
-      </div>
-      <div class="field"><label>Acción al tocarlo</label>
-        <div class="field-chips" id="fb-tipo-chips">
-          <button type="button" class="field-chip sel" data-tipo="whatsapp">Mensaje de WhatsApp</button>
-          <button type="button" class="field-chip" data-tipo="categoria">Ir a una categoría</button>
-          <button type="button" class="field-chip" data-tipo="personalizado">Abrir cartel personalizado</button>
-        </div>
-        <input type="hidden" id="fb-tipo" value="whatsapp">
-      </div>
-      <div id="fb-valor-box"></div>
-      <div class="err-msg" id="fb-err"></div>
-      <div class="modal-actions">
-        <button class="btn btn-ghost modal-close">Cerrar</button>
-        <button class="btn btn-primary" id="fb-add">${ICON.plus}Agregar botón</button>
-      </div>
-    `);
-    document.querySelectorAll('[data-fb-del]').forEach(b => {
-      b.onclick = async () => { await deleteDoc('botones_flotantes', b.getAttribute('data-fb-del')); render2(); };
-    });
-    function paintValor(){
-      const tipo = document.getElementById('fb-tipo').value;
-      const box = document.getElementById('fb-valor-box');
-      if (tipo === 'whatsapp'){
-        box.innerHTML = `<div class="field"><label>Mensaje de WhatsApp</label><input type="text" id="fb-valor" placeholder="Ej: Hola, quiero consultar por descuentos"></div>`;
-      } else if (tipo === 'categoria'){
-        const temas = temaList();
-        box.innerHTML = temas.length
-          ? `<div class="field"><label>Categoría</label><select id="fb-valor">${temas.map(t=>`<option value="${esc(t.nombre)}">${esc(t.nombre)}</option>`).join('')}</select></div>`
-          : `<p class="hint">Todavía no tenés categorías cargadas en el catálogo.</p>`;
-      } else {
-        box.innerHTML = '';
-      }
+/* ---- Compartir página por WhatsApp ---- */
+function shareLink(){
+  let base = SITE_URL_DEFAULT + '/';
+  try {
+    const h = location.hostname || '';
+    if (/^https?:$/.test(location.protocol) && h && !/(^|\.)claude\.ai$|claudeusercontent|localhost|127\.0\.0\.1/.test(h)){
+      base = location.origin + location.pathname.replace(/index\.html$/, '');
     }
-    document.querySelectorAll('#fb-tipo-chips .field-chip').forEach(b => {
-      b.onclick = () => {
-        document.querySelectorAll('#fb-tipo-chips .field-chip').forEach(x=>x.classList.remove('sel'));
-        b.classList.add('sel');
-        document.getElementById('fb-tipo').value = b.getAttribute('data-tipo');
-        paintValor();
-      };
-    });
-    paintValor();
-    document.getElementById('fb-add').onclick = async () => {
-      const texto = document.getElementById('fb-texto').value.trim();
-      if (!texto){ document.getElementById('fb-err').textContent = 'Poné un texto para el botón.'; return; }
-      const tipo = document.getElementById('fb-tipo').value;
-      const valorEl = document.getElementById('fb-valor');
-      const valor = valorEl ? valorEl.value.trim() : '';
-      if (tipo !== 'personalizado' && !valor){ document.getElementById('fb-err').textContent = 'Completá la acción del botón.'; return; }
-      await writeDoc('botones_flotantes', uid(), {
-        texto, emoji: document.getElementById('fb-emoji').value.trim(), tipo, valor,
-        orden: arr('botones_flotantes').length,
-      });
-      render2();
-    };
+  } catch(e){}
+  if (!/\/$/.test(base)) base += '/';
+  return base + '?cliente=1';
+}
+function copyText(txt){
+  if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(txt);
+  return new Promise((resolve, reject) => {
+    try {
+      const t = document.createElement('textarea');
+      t.value = txt; t.style.position = 'fixed'; t.style.opacity = '0';
+      document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove();
+      resolve();
+    } catch(e){ reject(e); }
+  });
+}
+function openCompartirModal(){
+  const link = shareLink();
+  const msg = '¡Hola! 👋 Te comparto la página de Puelo Neón 💚\n\nMirá nuestros carteles de neón LED, alquilá el que más te guste o pedí el tuyo personalizado:';
+  openModal(`
+    ${modalHead('Compartir página')}
+    <p style="margin:-6px 0 14px; font-size:12.5px; color:var(--ink-dim);">Mandá el enlace a tus clientes. Al abrirlo entran directo a la galería (sin ver el acceso de administrador).</p>
+    <div class="field"><label>Enlace de la página</label><input type="text" id="sh-link" value="${esc(link)}"></div>
+    <div class="field"><label>Mensaje</label><textarea id="sh-msg" style="min-height:120px;">${esc(msg)}</textarea>
+      <div class="hint">El enlace se agrega al final del mensaje. Al tocar el botón elegís a quién mandarlo desde WhatsApp.</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="sh-copy">Copiar enlace</button>
+      <button class="btn btn-wa" id="sh-wa">${ICON.wa}Enviar por WhatsApp</button>
+    </div>
+  `);
+  document.getElementById('sh-copy').onclick = () => {
+    copyText(document.getElementById('sh-link').value.trim())
+      .then(() => showToast('Enlace copiado'))
+      .catch(() => showToast('No se pudo copiar, seleccionalo a mano.'));
   };
-  render2();
+  document.getElementById('sh-wa').onclick = () => {
+    const text = document.getElementById('sh-msg').value.trim() + '\n\n' + document.getElementById('sh-link').value.trim();
+    window.open(waLink('', text), '_blank', 'noopener');
+  };
 }
 
 function openPortadaImagenesModal(){
@@ -2543,12 +2816,14 @@ function renderClientScreen(){
   const el = document.getElementById('client-screen');
   if (!el) return;
   if (dbMode === 'init'){ el.innerHTML = renderLoading(); return; }
-  const carteles = arr('carteles');
+  const todos = arr('carteles');
+  const enVenta = todos.filter(c => c.enVenta);
+  const carteles = todos.filter(c => !c.enVenta);
   const temas = temaList();
   const temasPresentes = temas.filter(t => carteles.some(c => c.tematica === t.nombre));
   const portada = getPortada();
   el.innerHTML = `
-    ${renderHeroBlock(portada, { showBack: true, animate: true })}
+    ${renderHeroBlock(portada, { showBack: !directClient, scrollHint: true, animate: true })}
     <div class="cta-personalizado">
       <div class="ico">✨</div>
       <div class="txt">
@@ -2558,9 +2833,8 @@ function renderClientScreen(){
       <button class="btn btn-primary" data-open-personalizado="1">Quiero el mío</button>
     </div>
     ${portada.videoUrl ? `<div class="gallery-section"><h2 style="color:var(--green);">Mirá nuestro trabajo</h2>${videoEmbedHtml(portada.videoUrl)}</div>` : ''}
-    ${temasPresentes.length === 0 ?
-      `<div class="empty" style="margin:0 20px;"><b>Catálogo en preparación</b>Muy pronto vas a poder ver nuestros carteles acá.</div>` :
-      temasPresentes.map(t => renderTemaCarousel(t, carteles.filter(c => c.tematica === t.nombre))).join('')}
+    ${renderVentaSeccion(enVenta)}
+    ${temasPresentes.map(t => renderTemaCarousel(t, carteles.filter(c => c.tematica === t.nombre))).join('')}
     ${renderFotoSeccion('Nuestros trabajos', 'var(--green)', 'fotos_trabajos')}
     ${renderFotoSeccion('Nuestros clientes · Trabajos en la calle', '#ffd1e8', 'fotos_clientes')}
     <div class="gallery-social">
@@ -2573,12 +2847,41 @@ function renderClientScreen(){
   startHeroCarousel();
 }
 
+function renderVentaSeccion(list){
+  if (!list.length) return '';
+  return `
+    <div class="gallery-section">
+      <h2 style="color:var(--green);">A la venta hoy</h2>
+      <div class="carousel">${list.map(saleCard).join('')}</div>
+    </div>
+  `;
+}
+
+function saleCard(c){
+  const color = temaColor(c.tematica);
+  const swatch = c.imagen
+    ? `<div class="gallery-swatch" data-lightbox-photo="carteles|${c.id}" style="background-image:url('${c.imagen}'); background-size:cover; background-position:center; cursor:zoom-in;"></div>`
+    : `<div class="gallery-swatch" style="background:linear-gradient(135deg, ${color}33, ${color}0d); color:${color}; border-bottom-color:${color}33;">${esc(c.nombre)}</div>`;
+  return `
+    <div class="gallery-card">
+      ${swatch}
+      <div class="gallery-card-body">
+        <h4>${esc(c.nombre)}</h4>
+        <p>${esc(c.descripcion||'')}</p>
+        <span class="pill pill-green">En venta</span>
+        <button class="btn btn-primary btn-block" data-loquiero="${c.id}">Lo quiero</button>
+      </div>
+    </div>
+  `;
+}
+
 function renderFloatingButtons(){
   const list = arr('botones_flotantes').sort((a,b)=>(a.orden||0)-(b.orden||0));
   if (!list.length) return '';
-  return `<div class="floating-btns">${list.map(b => `
-    <button type="button" class="floating-btn" data-fb-click="${b.id}">${b.emoji?esc(b.emoji)+' ':''}${esc(b.texto)}</button>
-  `).join('')}</div>`;
+  return `<div class="floating-layer">${list.map((b, i) => {
+    const p = fbPosition(b, i);
+    return `<button type="button" class="floating-btn" data-fb-click="${b.id}" style="left:${p.x}%; top:${p.y}%; transform:translate(-${p.x}%, -${p.y}%);">${b.emoji?esc(b.emoji)+' ':''}${esc(b.texto)}</button>`;
+  }).join('')}</div>`;
 }
 
 function renderTemaCarousel(tema, list){
@@ -2935,6 +3238,9 @@ function openCartelForm(id){
         </select>
       </div>
     </div>
+    <div class="field"><label><input type="checkbox" id="f-venta" ${c&&c.enVenta?'checked':''} style="width:auto; margin-right:6px; vertical-align:middle;">Ponerlo en "A la venta hoy"</label>
+      <div class="hint">Aparece en la sección "A la venta hoy" de la galería, con un solo botón "Lo quiero" que lleva a WhatsApp (sin opción de alquilar).</div>
+    </div>
     <div class="err-msg" id="f-err"></div>
     <div class="modal-actions">
       <button class="btn btn-ghost modal-close">Cancelar</button>
@@ -2959,6 +3265,7 @@ function openCartelForm(id){
       descripcion: document.getElementById('f-desc').value.trim(),
       precio: Number(document.getElementById('f-precio').value) || 0,
       estado: document.getElementById('f-estado').value,
+      enVenta: document.getElementById('f-venta').checked,
       imagen: picker.get(),
     };
     const theId = id || uid();
@@ -3237,7 +3544,8 @@ document.addEventListener('click', (e) => {
     else if (kind === 'estilo-editar') openEstiloEditar(id);
     else if (kind === 'portada-imagenes') openPortadaImagenesModal();
     else if (kind === 'portada-editor') openHeroEditorModal();
-    else if (kind === 'portada-botones') openBotonesFlotantesModal();
+    else if (kind === 'portada-splash') openSplashEditorModal();
+    else if (kind === 'compartir-pagina') openCompartirModal();
     else if (kind === 'material-nuevo') openMaterialForm(null);
     else if (kind === 'material-editar') openMaterialForm(id);
     else if (kind === 'proveedor-nuevo') openProveedorForm(null);
@@ -3295,6 +3603,16 @@ document.addEventListener('click', (e) => {
 
   const reservarBtn = e.target.closest('[data-reservar]');
   if (reservarBtn){ openReservarModal(reservarBtn.getAttribute('data-reservar')); return; }
+
+  const loQuieroBtn = e.target.closest('[data-loquiero]');
+  if (loQuieroBtn){
+    const c = getDoc('carteles', loQuieroBtn.getAttribute('data-loquiero'));
+    if (c){
+      const msg = `¡Hola! Quiero comprar el cartel "${c.nombre}" que vi en "A la venta hoy" de Puelo Neón. ¿Me pasás precio y detalles?`;
+      window.open(waLink(WHATSAPP_RESERVAS, msg), '_blank', 'noopener');
+    }
+    return;
+  }
 
   const comprarBtn = e.target.closest('[data-comprar]');
   if (comprarBtn){
@@ -3365,6 +3683,10 @@ document.addEventListener('input', (e) => {
 
 /* ============================== INIT ============================== */
 renderGateScreen();
+try {
+  const qp = new URLSearchParams(location.search);
+  if (qp.has('cliente') || location.hash === '#cliente'){ directClient = true; setScreen('client'); }
+} catch(e){}
 initData();
 })();
 </script>
