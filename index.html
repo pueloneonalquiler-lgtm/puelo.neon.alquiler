@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<head>="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Puelo Neón · Alquiler</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="
+<meta charset="UTF-8">
+<meta name="viewport" contenthttps://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -510,7 +510,11 @@
   .gallery-video iframe, .gallery-video video { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: #000; }
 
   /* ---------- Editor visual de portada (arrastrar/soltar) ---------- */
-  .hero-editor-canvas { position: relative; width: 100%; max-width: 320px; margin: 0 auto; aspect-ratio: 9 / 18.5; max-height: 58vh; border-radius: 22px; overflow: hidden; background: #08110d; border: 1px solid var(--panel-border); background-size: cover; background-position: center; container-type: inline-size; }
+  .hero-editor-canvas {
+    position: relative; height: min(68vh, 620px); width: auto; aspect-ratio: 9 / 19.5; max-width: min(94vw, 340px);
+    margin: 0 auto; border-radius: 22px; overflow: hidden; background: #08110d; border: 1px solid var(--panel-border);
+    background-size: cover; background-position: center; container-type: inline-size;
+  }
   .hero-el.editable { position: absolute; transform: translate(-50%,-50%); cursor: grab; touch-action: none; padding: 2px; }
   .hero-el.editable.dragging { cursor: grabbing; }
   .hero-el.editable:hover, .hero-el.editable:focus-within { outline: 1px dashed var(--green-soft); outline-offset: 6px; }
