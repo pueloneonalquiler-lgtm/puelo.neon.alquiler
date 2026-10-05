@@ -452,13 +452,18 @@
   .gallery-social a:hover { color: var(--green); border-color: var(--green-soft); }
 
   /* ---------- Hero con fondo rotativo y elementos libres ---------- */
-  .hero-wrap { position: relative; overflow: hidden; background: #08110d; height: 64vh; min-height: 460px; max-height: 620px; }
+  .hero-wrap {
+    position: relative; overflow: hidden; background: #08110d;
+    height: 64vh; min-height: 460px; max-height: 620px;
+    max-width: 560px; margin: 0 auto;
+    container-type: inline-size;
+  }
   @media (max-width: 900px) {
-    .hero-wrap { height: 100vh; height: 100dvh; min-height: 0; max-height: none; }
+    .hero-wrap { height: 100vh; height: 100dvh; min-height: 0; max-height: none; max-width: none; }
   }
   .hero-bg { position: absolute; inset: 0; z-index: 0; }
-  .hero-bg img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 1.4s ease; }
-  .hero-bg img.active { opacity: .32; }
+  .hero-bg img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 1.4s ease, filter .3s ease; }
+  .hero-bg img.active { opacity: var(--bg-opacity, .45); }
   .hero-bg::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(7,12,9,.45), rgba(7,12,9,.95)); }
   .hero-back { position: absolute; z-index: 2; top: calc(14px + env(safe-area-inset-top,0px)); right: 16px; }
   .hero-stage { position: absolute; inset: 0; z-index: 1; }
@@ -488,12 +493,24 @@
   /* ---------- Negocio: presupuestos / stock / gastos ---------- */
   .breakdown-row { display: flex; justify-content: space-between; font-size: 13px; color: var(--ink-dim); padding: 3px 0; }
 
+  /* ---------- Botones flotantes (galería) ---------- */
+  .floating-btns {
+    position: fixed; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom,0px)); z-index: 45;
+    display: flex; flex-direction: column; gap: 10px; align-items: flex-end;
+  }
+  .floating-btn {
+    display: inline-flex; align-items: center; gap: 7px; padding: 11px 18px; border-radius: 30px;
+    background: var(--green); color: #06170f; font-weight: 800; font-size: 13px; border: none; cursor: pointer;
+    white-space: nowrap; box-shadow: 0 10px 28px rgba(0,0,0,.45), 0 0 18px rgba(77,255,163,.35);
+  }
+  .floating-btn:active { transform: scale(.96); }
+
   .gallery-video { max-width: 720px; margin: 0 auto 8px; padding: 0 20px; }
   .gallery-video .frame { position: relative; padding-top: 56.25%; border-radius: 14px; overflow: hidden; border: 1px solid var(--panel-border-soft); }
   .gallery-video iframe, .gallery-video video { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: #000; }
 
   /* ---------- Editor visual de portada (arrastrar/soltar) ---------- */
-  .hero-editor-canvas { position: relative; width: 100%; max-width: 320px; margin: 0 auto; aspect-ratio: 9 / 18.5; max-height: 58vh; border-radius: 22px; overflow: hidden; background: #08110d; border: 1px solid var(--panel-border); background-size: cover; background-position: center; }
+  .hero-editor-canvas { position: relative; width: 100%; max-width: 320px; margin: 0 auto; aspect-ratio: 9 / 18.5; max-height: 58vh; border-radius: 22px; overflow: hidden; background: #08110d; border: 1px solid var(--panel-border); background-size: cover; background-position: center; container-type: inline-size; }
   .hero-el.editable { position: absolute; transform: translate(-50%,-50%); cursor: grab; touch-action: none; padding: 2px; }
   .hero-el.editable.dragging { cursor: grabbing; }
   .hero-el.editable:hover, .hero-el.editable:focus-within { outline: 1px dashed var(--green-soft); outline-offset: 6px; }
@@ -628,6 +645,7 @@ const DEFAULT_CONFIG = { precioDia: 0, precioMensualFijo: 0, precioMembresiaMes:
 const DEFAULT_PORTADA = {
   fondos: [],
   videoUrl: '',
+  fondoOpacidad: 0.45,
   elementos: [
     { id: 'logo', tipo: 'logo', x: 50, y: 26, w: 30, imagen: null },
     { id: 'titulo', tipo: 'texto', x: 50, y: 50, fontSizeVw: 7, maxPx: 34, texto: 'Bienvenido', color: '#f3fff8', bold: true, pill: false },
@@ -659,8 +677,8 @@ let catFilter = 'Todos';
 let seedChecked = false;
 
 let screen = 'gate'; // 'gate' | 'client' | 'admin'
-const state = { clientes: {}, carteles: {}, alquileres: {}, suscripciones: {}, config: {}, temas: {}, estilos: {}, personalizados: {}, fotos_trabajos: {}, fotos_clientes: {}, materiales: {}, ventas: {}, gastos: {}, proveedores: {} };
-const COLS = ['clientes','carteles','alquileres','suscripciones','config','temas','estilos','personalizados','fotos_trabajos','fotos_clientes','materiales','ventas','gastos','proveedores'];
+const state = { clientes: {}, carteles: {}, alquileres: {}, suscripciones: {}, config: {}, temas: {}, estilos: {}, personalizados: {}, fotos_trabajos: {}, fotos_clientes: {}, materiales: {}, ventas: {}, gastos: {}, proveedores: {}, botones_flotantes: {} };
+const COLS = ['clientes','carteles','alquileres','suscripciones','config','temas','estilos','personalizados','fotos_trabajos','fotos_clientes','materiales','ventas','gastos','proveedores','botones_flotantes'];
 
 /* ============================== HELPERS ============================== */
 function uid(){ return (crypto && crypto.randomUUID) ? crypto.randomUUID() : 'id-'+Date.now()+'-'+Math.random().toString(16).slice(2); }
@@ -1450,7 +1468,7 @@ function heroElementHtml(el){
     const src = el.imagen || LOGO_DATA_URL;
     return `<div class="hero-el" style="left:${el.x}%; top:${el.y}%; width:${el.w}%;"><img src="${src}" class="hero-logo-img" alt="Puelo Neón"></div>`;
   }
-  const textStyle = `font-size:clamp(12px, ${el.fontSizeVw}vw, ${el.maxPx||34}px); color:${el.color||'#f3fff8'}; font-weight:${el.bold?800:600};`;
+  const textStyle = `font-size:clamp(12px, ${el.fontSizeVw}cqw, ${el.maxPx||34}px); color:${el.color||'#f3fff8'}; font-weight:${el.bold?800:600};`;
   const cls = el.pill ? 'hero-pill-text' : 'hero-plain-text';
   return `<div class="hero-el" style="left:${el.x}%; top:${el.y}%;"><div class="${cls}" style="${textStyle}">${esc(el.texto)}</div></div>`;
 }
@@ -1459,9 +1477,10 @@ function renderHeroBlock(portada, opts){
   opts = opts || {};
   const fondos = portada.fondos || [];
   const elementos = (portada.elementos && portada.elementos.length) ? portada.elementos : DEFAULT_PORTADA.elementos;
+  const opacidad = portada.fondoOpacidad != null ? portada.fondoOpacidad : DEFAULT_PORTADA.fondoOpacidad;
   const bgHtml = opts.animate
-    ? `<div class="hero-bg" id="hero-bg">${fondos.map((src,i)=>`<img src="${src}" class="${i===0?'active':''}">`).join('')}</div>`
-    : `<div class="hero-bg">${fondos[0] ? `<img src="${fondos[0]}" class="active">` : ''}</div>`;
+    ? `<div class="hero-bg" id="hero-bg" style="--bg-opacity:${opacidad}">${fondos.map((src,i)=>`<img src="${src}" class="${i===0?'active':''}">`).join('')}</div>`
+    : `<div class="hero-bg" style="--bg-opacity:${opacidad}">${fondos[0] ? `<img src="${fondos[0]}" class="active">` : ''}</div>`;
   return `
     <div class="hero-wrap">
       ${bgHtml}
@@ -1572,6 +1591,7 @@ function renderPortada(){
       <div><h1>Portada de la galería</h1><p class="sub">Así se arma la pantalla de bienvenida que ven tus clientes: logo, fotos de fondo y textos. Arrastrá para acomodar cada elemento a tu gusto.</p></div>
       <div style="display:flex; gap:8px; flex-wrap:wrap;">
         <button class="btn btn-ghost" data-open="portada-imagenes">${ICON.image}Imágenes de fondo</button>
+        <button class="btn btn-ghost" data-open="portada-botones">${ICON.sparkle}Botones flotantes</button>
         <button class="btn btn-primary" data-open="portada-editor">${ICON.edit}Editar diseño</button>
       </div>
     </div>
@@ -1591,6 +1611,7 @@ function openHeroEditorModal(){
   const portadaActual = getPortada();
   let elementos = JSON.parse(JSON.stringify(portadaActual.elementos && portadaActual.elementos.length ? portadaActual.elementos : DEFAULT_PORTADA.elementos));
   const fondoPreview = (portadaActual.fondos && portadaActual.fondos[0]) || '';
+  let fondoOpacidad = portadaActual.fondoOpacidad != null ? portadaActual.fondoOpacidad : DEFAULT_PORTADA.fondoOpacidad;
   let mode = 'canvas';
   let editingId = null;
 
@@ -1608,7 +1629,7 @@ function openHeroEditorModal(){
           <div class="hero-el-handle" data-resize-handle title="Arrastrá para agrandar/achicar"></div>
         </div>`;
     }
-    const textStyle = `font-size:clamp(12px, ${el.fontSizeVw}vw, ${el.maxPx||34}px); color:${el.color||'#f3fff8'}; font-weight:${el.bold?800:600};`;
+    const textStyle = `font-size:clamp(12px, ${el.fontSizeVw}cqw, ${el.maxPx||34}px); color:${el.color||'#f3fff8'}; font-weight:${el.bold?800:600};`;
     const cls = el.pill ? 'hero-pill-text' : 'hero-plain-text';
     return `
       <div class="hero-el editable" data-el-id="${el.id}" style="left:${el.x}%; top:${el.y}%;">
@@ -1622,7 +1643,9 @@ function openHeroEditorModal(){
   }
 
   function canvasHtml(){
-    const bgStyle = fondoPreview ? `background-image: linear-gradient(180deg, rgba(7,12,9,.45), rgba(7,12,9,.92)), url('${fondoPreview}');` : '';
+    const topA = Math.max(0.15, 0.55 - fondoOpacidad*0.3);
+    const botA = Math.max(0.55, 0.95 - fondoOpacidad*0.3);
+    const bgStyle = fondoPreview ? `background-image: linear-gradient(180deg, rgba(7,12,9,${topA}), rgba(7,12,9,${botA})), url('${fondoPreview}');` : '';
     return `<div class="hero-editor-canvas" id="hero-canvas" style="${bgStyle}">${elementos.map(elEditableHtml).join('')}</div>`;
   }
 
@@ -1676,7 +1699,7 @@ function openHeroEditorModal(){
             } else {
               el.fontSizeVw = clampNum(orig + dxPct * 0.3, 2.5, 13);
               const txt = div.querySelector('.hero-el-text');
-              if (txt) txt.style.fontSize = `clamp(12px, ${el.fontSizeVw}vw, ${el.maxPx||34}px)`;
+              if (txt) txt.style.fontSize = `clamp(12px, ${el.fontSizeVw}cqw, ${el.maxPx||34}px)`;
             }
           }
           function up(){
@@ -1715,13 +1738,23 @@ function openHeroEditorModal(){
         <p style="margin:-6px 0 12px; font-size:12.5px; color:var(--ink-dim);">Arrastrá el logo o los textos para moverlos. Tirá del cuadradito verde (esquina inferior derecha) para agrandar o achicar.</p>
         <div id="hero-canvas-wrap">${canvasHtml()}</div>
         <button type="button" class="btn btn-ghost btn-sm" style="margin-top:12px;" id="hero-add-text">${ICON.plus}Agregar texto</button>
-        <div class="field" style="margin-top:14px;"><label>Video de YouTube (opcional)</label><input type="text" id="hero-video" value="${esc(portadaActual.videoUrl||'')}" placeholder="https://youtube.com/watch?v=..."></div>
+        <div class="field" style="margin-top:14px;">
+          <label>Brillo de las fotos de fondo</label>
+          <input type="range" id="hero-brillo" min="10" max="85" step="5" value="${Math.round(fondoOpacidad*100)}" style="width:100%;">
+          <div class="hint">Más brillo hace que las fotos se vean más fuerte; menos brillo deja el texto más legible.</div>
+        </div>
+        <div class="field"><label>Video de YouTube (opcional)</label><input type="text" id="hero-video" value="${esc(portadaActual.videoUrl||'')}" placeholder="https://youtube.com/watch?v=..."></div>
         <div class="modal-actions">
           <button class="btn btn-ghost modal-close">Cancelar</button>
           <button class="btn btn-primary" id="hero-save">Guardar</button>
         </div>
       `, { wide: true });
       bindCanvasEvents();
+      document.getElementById('hero-brillo').oninput = (e) => {
+        fondoOpacidad = Number(e.target.value)/100;
+        document.getElementById('hero-canvas-wrap').innerHTML = canvasHtml();
+        bindCanvasEvents();
+      };
       document.getElementById('hero-add-text').onclick = () => {
         const nuevo = { id: uid(), tipo: 'texto', x: 50, y: 78, fontSizeVw: 4, maxPx: 18, texto: 'Nuevo texto', color: '#f3fff8', bold: false, pill: false };
         elementos.push(nuevo);
@@ -1729,7 +1762,7 @@ function openHeroEditorModal(){
       };
       document.getElementById('hero-save').onclick = async () => {
         const videoUrlVal = document.getElementById('hero-video').value.trim();
-        await patchDoc('config', 'portada', { elementos, videoUrl: videoUrlVal });
+        await patchDoc('config', 'portada', { elementos, videoUrl: videoUrlVal, fondoOpacidad });
         closeModal(); render();
         showToast('Diseño de portada guardado');
       };
@@ -1738,7 +1771,9 @@ function openHeroEditorModal(){
       if (!el){ mode = 'canvas'; paint(); return; }
       openModal(`
         ${modalHead('Editar texto')}
-        <div class="field"><label>Texto</label><textarea id="et-texto">${esc(el.texto)}</textarea></div>
+        <div class="field"><label>Texto</label><textarea id="et-texto">${esc(el.texto)}</textarea>
+          <div class="hint">Presioná Enter adentro del texto para forzar un salto de línea exactamente donde quieras.</div>
+        </div>
         <div class="field-row">
           <div class="field"><label>Color</label><input type="color" id="et-color" value="${el.color||'#f3fff8'}" style="height:42px; padding:4px;"></div>
           <div class="field"><label>Estilo</label>
@@ -1770,6 +1805,84 @@ function openHeroEditorModal(){
   }
 
   paint();
+}
+
+/* ---- Botones flotantes (galería) ---- */
+function openBotonesFlotantesModal(){
+  const render2 = () => {
+    const list = arr('botones_flotantes').sort((a,b)=>(a.orden||0)-(b.orden||0));
+    openModal(`
+      ${modalHead('Botones flotantes')}
+      <p style="margin:-6px 0 14px; font-size:12.5px; color:var(--ink-dim);">Quedan fijos abajo a la derecha en toda la galería, incluso mientras el cliente hace scroll.</p>
+      <div class="list" style="margin-bottom:16px;">
+        ${list.length===0 ? '<div class="empty">Todavía no hay botones flotantes.</div>' : list.map(b => `
+          <div class="tema-manage-row">
+            <span style="font-size:16px;">${esc(b.emoji||'🔔')}</span>
+            <span class="nm">${esc(b.texto)}</span>
+            <button type="button" class="iconbtn" data-fb-del="${b.id}" title="Eliminar">${ICON.trash}</button>
+          </div>
+        `).join('')}
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Emoji (opcional)</label><input type="text" id="fb-emoji" placeholder="🎉" maxlength="4"></div>
+        <div class="field"><label>Texto del botón</label><input type="text" id="fb-texto" placeholder="Ej: Descuentos"></div>
+      </div>
+      <div class="field"><label>Acción al tocarlo</label>
+        <div class="field-chips" id="fb-tipo-chips">
+          <button type="button" class="field-chip sel" data-tipo="whatsapp">Mensaje de WhatsApp</button>
+          <button type="button" class="field-chip" data-tipo="categoria">Ir a una categoría</button>
+          <button type="button" class="field-chip" data-tipo="personalizado">Abrir cartel personalizado</button>
+        </div>
+        <input type="hidden" id="fb-tipo" value="whatsapp">
+      </div>
+      <div id="fb-valor-box"></div>
+      <div class="err-msg" id="fb-err"></div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost modal-close">Cerrar</button>
+        <button class="btn btn-primary" id="fb-add">${ICON.plus}Agregar botón</button>
+      </div>
+    `);
+    document.querySelectorAll('[data-fb-del]').forEach(b => {
+      b.onclick = async () => { await deleteDoc('botones_flotantes', b.getAttribute('data-fb-del')); render2(); };
+    });
+    function paintValor(){
+      const tipo = document.getElementById('fb-tipo').value;
+      const box = document.getElementById('fb-valor-box');
+      if (tipo === 'whatsapp'){
+        box.innerHTML = `<div class="field"><label>Mensaje de WhatsApp</label><input type="text" id="fb-valor" placeholder="Ej: Hola, quiero consultar por descuentos"></div>`;
+      } else if (tipo === 'categoria'){
+        const temas = temaList();
+        box.innerHTML = temas.length
+          ? `<div class="field"><label>Categoría</label><select id="fb-valor">${temas.map(t=>`<option value="${esc(t.nombre)}">${esc(t.nombre)}</option>`).join('')}</select></div>`
+          : `<p class="hint">Todavía no tenés categorías cargadas en el catálogo.</p>`;
+      } else {
+        box.innerHTML = '';
+      }
+    }
+    document.querySelectorAll('#fb-tipo-chips .field-chip').forEach(b => {
+      b.onclick = () => {
+        document.querySelectorAll('#fb-tipo-chips .field-chip').forEach(x=>x.classList.remove('sel'));
+        b.classList.add('sel');
+        document.getElementById('fb-tipo').value = b.getAttribute('data-tipo');
+        paintValor();
+      };
+    });
+    paintValor();
+    document.getElementById('fb-add').onclick = async () => {
+      const texto = document.getElementById('fb-texto').value.trim();
+      if (!texto){ document.getElementById('fb-err').textContent = 'Poné un texto para el botón.'; return; }
+      const tipo = document.getElementById('fb-tipo').value;
+      const valorEl = document.getElementById('fb-valor');
+      const valor = valorEl ? valorEl.value.trim() : '';
+      if (tipo !== 'personalizado' && !valor){ document.getElementById('fb-err').textContent = 'Completá la acción del botón.'; return; }
+      await writeDoc('botones_flotantes', uid(), {
+        texto, emoji: document.getElementById('fb-emoji').value.trim(), tipo, valor,
+        orden: arr('botones_flotantes').length,
+      });
+      render2();
+    };
+  };
+  render2();
 }
 
 function openPortadaImagenesModal(){
@@ -2451,8 +2564,17 @@ function renderClientScreen(){
       <a href="${esc(SOCIAL_FACEBOOK)}" target="_blank" rel="noopener" title="Facebook">${ICON.facebook}</a>
       <a href="${waLink(WHATSAPP_RESERVAS, 'Hola, vengo de la galeria de Puelo Neon.')}" target="_blank" rel="noopener" title="WhatsApp">${ICON.wa}</a>
     </div>
+    ${renderFloatingButtons()}
   `;
   startHeroCarousel();
+}
+
+function renderFloatingButtons(){
+  const list = arr('botones_flotantes').sort((a,b)=>(a.orden||0)-(b.orden||0));
+  if (!list.length) return '';
+  return `<div class="floating-btns">${list.map(b => `
+    <button type="button" class="floating-btn" data-fb-click="${b.id}">${b.emoji?esc(b.emoji)+' ':''}${esc(b.texto)}</button>
+  `).join('')}</div>`;
 }
 
 function renderTemaCarousel(tema, list){
@@ -3111,6 +3233,7 @@ document.addEventListener('click', (e) => {
     else if (kind === 'estilo-editar') openEstiloEditar(id);
     else if (kind === 'portada-imagenes') openPortadaImagenesModal();
     else if (kind === 'portada-editor') openHeroEditorModal();
+    else if (kind === 'portada-botones') openBotonesFlotantesModal();
     else if (kind === 'material-nuevo') openMaterialForm(null);
     else if (kind === 'material-editar') openMaterialForm(id);
     else if (kind === 'proveedor-nuevo') openProveedorForm(null);
@@ -3184,6 +3307,23 @@ document.addEventListener('click', (e) => {
     const [col, pid] = lightboxBtn.getAttribute('data-lightbox-photo').split('|');
     const doc = getDoc(col, pid);
     if (doc && doc.imagen) openLightbox(doc.imagen);
+    return;
+  }
+
+  const fbBtn = e.target.closest('[data-fb-click]');
+  if (fbBtn){
+    const b = getDoc('botones_flotantes', fbBtn.getAttribute('data-fb-click'));
+    if (b){
+      if (b.tipo === 'whatsapp'){
+        window.open(waLink(WHATSAPP_RESERVAS, b.valor || '¡Hola!'), '_blank', 'noopener');
+      } else if (b.tipo === 'categoria'){
+        const h2s = Array.from(document.querySelectorAll('.gallery-section h2'));
+        const target = h2s.find(h => h.textContent.trim() === b.valor);
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else if (b.tipo === 'personalizado'){
+        openPersonalizadoModal();
+      }
+    }
     return;
   }
 
