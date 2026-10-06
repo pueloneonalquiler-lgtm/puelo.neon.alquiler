@@ -215,7 +215,7 @@
     font-family: var(--font-display); font-weight: 700; font-size: 15px;
   }
   .row-main { flex: 1; min-width: 0; }
-  .row-main .t1 { font-weight: 700; font-size: 14.5px; color: var(--ink); }
+  .row-main .t1 { font-weight: 700; font-size: 14.5px; color: var(--ink); overflow-wrap: anywhere; }
   .row-main .t2 { font-size: 12.5px; color: var(--ink-dim); margin-top: 2px; }
   .row-actions { display: flex; gap: 6px; flex-shrink: 0; }
 
@@ -525,6 +525,54 @@
   .floating-btn:active { filter: brightness(.9); }
   .fb-preview { position: static !important; }
 
+/* ---------- Tienda ---------- */
+  #shop-screen { display: none; }
+  body[data-screen="shop"] #shop-screen { display: block; min-height: 100vh; padding-bottom: 96px; }
+  .shop-header {
+    position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 12px;
+    padding: calc(12px + env(safe-area-inset-top,0px)) 16px 12px; background: rgba(7,12,9,.93);
+    backdrop-filter: blur(8px); border-bottom: 1px solid var(--panel-border-soft);
+  }
+  .shop-header h1 { flex: 1; margin: 0; font-family: var(--font-display); font-size: 20px; color: var(--white); }
+  .shop-cart-btn {
+    position: relative; width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--panel-border);
+    background: var(--panel-2); color: var(--ink); display: flex; align-items: center; justify-content: center; cursor: pointer;
+  }
+  .shop-cart-btn svg { width: 20px; height: 20px; }
+  .shop-cart-btn .cbadge {
+    position: absolute; top: -4px; right: -4px; background: var(--green); color: #06170f; font-size: 11px; font-weight: 800;
+    border-radius: 20px; min-width: 18px; height: 18px; padding: 0 5px; display: flex; align-items: center; justify-content: center;
+  }
+  .shop-body { max-width: 980px; margin: 0 auto; padding: 16px; }
+  .shop-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(165px, 1fr)); gap: 12px; }
+  .shop-card { background: var(--panel-2); border: 1px solid var(--panel-border-soft); border-radius: var(--radius-m); overflow: hidden; display: flex; flex-direction: column; }
+  .shop-img { height: 120px; background-size: cover; background-position: center; cursor: zoom-in; }
+  .shop-img.placeholder { display: flex; align-items: center; justify-content: center; background: #08110d; color: var(--ink-faint); cursor: default; }
+  .shop-img.placeholder svg { width: 30px; height: 30px; }
+  .shop-card-body { padding: 12px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+  .shop-card-body h4 { margin: 0; font-size: 13.5px; color: var(--white); line-height: 1.3; flex: 1; }
+  .shop-card-body .price { font-family: var(--font-display); font-size: 17px; color: var(--green); }
+  .shop-card-body .low { font-size: 11px; color: var(--warn); font-weight: 700; min-height: 14px; }
+  .stepper { display: flex; align-items: center; justify-content: space-between; border: 1px solid var(--green-soft); border-radius: 8px; overflow: hidden; }
+  .stepper button { width: 42px; height: 36px; background: rgba(77,255,163,.1); color: var(--green); border: none; font-size: 18px; font-weight: 800; cursor: pointer; }
+  .stepper span { font-weight: 800; color: var(--white); }
+  .shop-cartbar {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; padding: 10px 16px calc(10px + env(safe-area-inset-bottom,0px));
+    background: rgba(6,10,8,.96); border-top: 1px solid var(--panel-border);
+  }
+  body[data-screen="shop"] #toast { bottom: calc(86px + env(safe-area-inset-bottom,0px)); }
+  .shop-maint { position: relative; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 32px 24px; gap: 14px; }
+  .shop-preview-banner { background: rgba(255,207,107,.12); border-bottom: 1px solid rgba(255,207,107,.3); color: var(--warn); text-align: center; font-size: 12px; font-weight: 700; padding: 8px 12px; }
+  .cart-line { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--panel-border-soft); }
+  .cart-line .nm { flex: 1; min-width: 0; font-size: 13px; font-weight: 700; color: var(--ink); }
+  .cart-line .nm small { display: block; color: var(--ink-dim); font-weight: 600; margin-top: 2px; }
+  .cart-line .stepper { width: 112px; flex-shrink: 0; }
+  .cart-line .stepper button { width: 32px; height: 30px; }
+  .tienda-status { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; border-color: rgba(255,207,107,.35); }
+  .tienda-status.open { border-color: rgba(77,255,163,.35); }
+  .tienda-status b { display: block; color: var(--white); font-size: 14.5px; }
+  .tienda-status span.d { font-size: 12.5px; color: var(--ink-dim); }
+
   /* ---------- Botón compartir página (panel admin) ---------- */
   #share-slot { margin: 4px 0 12px; }
   .share-btn { width: 100%; }
@@ -557,6 +605,7 @@
 <body data-screen="gate">
 <div id="gate-screen"></div>
 <div id="client-screen"></div>
+<div id="shop-screen"></div>
 
 <div id="app">
   <aside class="sidebar">
@@ -614,6 +663,7 @@ const ICON = {
   box: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8M12 13v8"/></svg>',
   truck: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h11v9H3zM14 11h4l3 3v2h-7z"/><circle cx="7" cy="18" r="1.6"/><circle cx="17.5" cy="18" r="1.6"/></svg>',
   trendUp: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>',
+  cart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 7h13l-1.4 8.2a2 2 0 0 1-2 1.8H9.4a2 2 0 0 1-2-1.7L5.8 4H3"/><circle cx="10" cy="20.5" r="1.3"/><circle cx="16.5" cy="20.5" r="1.3"/></svg>',
   trendDown: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l6 6 4-4 8 8"/><path d="M15 17h6v-6"/></svg>',
 };
 
@@ -640,6 +690,7 @@ const NAV = [
   { id: 'portada', label: 'Portada', icon: ICON.layout },
   { id: 'clientes', label: 'Clientes', icon: ICON.clients },
   { id: 'catalogo', label: 'Catálogo', icon: ICON.catalog },
+  { id: 'tienda', label: 'Tienda', icon: ICON.cart },
   { id: 'alquileres', label: 'Alquileres', icon: ICON.rentals },
   { id: 'suscripciones', label: 'Suscripciones', icon: ICON.subs },
   { id: 'personalizado', label: 'Personalizado', icon: ICON.sparkle },
@@ -685,6 +736,11 @@ const DEFAULT_SPLASH = {
     { id: 'subtitulo', tipo: 'texto', x: 50, y: 69, fontSizeVw: 4.6, maxPx: 18, texto: '¿Qué evento o vidriera querés destacar hoy?', color: '#8fab9d', bold: false, pill: false },
   ],
 };
+const DEFAULT_TIENDA = {
+  abierta: false,
+  margen: 50,
+  mensaje: 'Estamos preparando nuestra tienda de materiales para carteles de neón. ¡Muy pronto vas a poder armar tu pedido acá!',
+};
 const SITE_URL_DEFAULT = 'https://pueloneonalquiler.vercel.app';
 const DEFAULT_PORTADA = {
   fondos: [],
@@ -724,10 +780,15 @@ let splashActive = false;
 let splashDone = false;
 let splashTimer = null;
 let directClient = false;
+let shopPreview = false;
+let shopFilter = 'Todas';
+let shopSearch = '';
+let tiendaFilter = 'Todas';
+let cartForm = { nombre: '', dir: '', notas: '' };
 
 let screen = 'gate'; // 'gate' | 'client' | 'admin'
-const state = { clientes: {}, carteles: {}, alquileres: {}, suscripciones: {}, config: {}, temas: {}, estilos: {}, personalizados: {}, fotos_trabajos: {}, fotos_clientes: {}, materiales: {}, ventas: {}, gastos: {}, proveedores: {}, botones_flotantes: {} };
-const COLS = ['clientes','carteles','alquileres','suscripciones','config','temas','estilos','personalizados','fotos_trabajos','fotos_clientes','materiales','ventas','gastos','proveedores','botones_flotantes'];
+const state = { clientes: {}, carteles: {}, alquileres: {}, suscripciones: {}, config: {}, temas: {}, estilos: {}, personalizados: {}, fotos_trabajos: {}, fotos_clientes: {}, materiales: {}, ventas: {}, gastos: {}, proveedores: {}, botones_flotantes: {}, productos: {} };
+const COLS = ['clientes','carteles','alquileres','suscripciones','config','temas','estilos','personalizados','fotos_trabajos','fotos_clientes','materiales','ventas','gastos','proveedores','botones_flotantes','productos'];
 
 /* ============================== HELPERS ============================== */
 function uid(){ return (crypto && crypto.randomUUID) ? crypto.randomUUID() : 'id-'+Date.now()+'-'+Math.random().toString(16).slice(2); }
@@ -906,7 +967,7 @@ function afterFirstLoad(){
     seedCatalog();
   }
   importHistoricalData();
-  importCompraIluLed6431();
+  importCompraIluLed6431().then(importTiendaInicial).catch(err => console.error(err));
 }
 
 /* ---- Importación única del historial del proyecto anterior (ventas + stock) ---- */
@@ -1153,6 +1214,7 @@ function computeReminders(){
 function render(){
   if (screen === 'admin') renderAdminMain();
   else if (screen === 'client') renderClientScreen();
+  else if (screen === 'shop') renderShopScreen();
   // 'gate' screen is static and doesn't need refreshing on data changes
 }
 
@@ -1162,6 +1224,7 @@ function setScreen(s){
   if (s !== 'client'){ stopHeroCarousel(); hideSplashNow(); }
   if (s === 'gate') renderGateScreen();
   else if (s === 'client'){ renderClientScreen(); maybeStartSplash(); }
+  else if (s === 'shop') renderShopScreen();
   else if (s === 'admin') render();
 }
 
@@ -1185,6 +1248,7 @@ function renderAdminMain(){
   else if (tab === 'gastos') html = renderGastos();
   else if (tab === 'proveedores') html = renderProveedores();
   else if (tab === 'ganancias') html = renderGanancias();
+  else if (tab === 'tienda') html = renderTienda();
   main.innerHTML = html;
   if (tab === 'fotos') bindFotosTab();
 }
@@ -2801,7 +2865,7 @@ function openAdminPasswordModal(){
     if (val === ADMIN_PASSWORD){
       try { localStorage.setItem('pueloneon_admin_auth','ok'); } catch(e){}
       closeModal();
-      setScreen('admin');
+      goTo('admin');
     } else {
       document.getElementById('pw-err').textContent = 'Contraseña incorrecta.';
     }
@@ -2831,6 +2895,14 @@ function renderClientScreen(){
         <p>Subí tu logo, contanos el tamaño y elegí el estilo que más te guste.</p>
       </div>
       <button class="btn btn-primary" data-open-personalizado="1">Quiero el mío</button>
+    </div>
+    <div class="cta-personalizado">
+      <div class="ico">🛒</div>
+      <div class="txt">
+        <h3>Nuestra tienda ${getTienda().abierta ? '' : '<span class="pill pill-warn" style="vertical-align:middle;">En mantenimiento</span>'}</h3>
+        <p>Materiales para armar tus propios carteles de neón: neón LED, fuentes, cables, controladoras y más.</p>
+      </div>
+      <button class="btn btn-primary" data-open-tienda="1">Ver tienda</button>
     </div>
     ${portada.videoUrl ? `<div class="gallery-section"><h2 style="color:var(--green);">Mirá nuestro trabajo</h2>${videoEmbedHtml(portada.videoUrl)}</div>` : ''}
     ${renderVentaSeccion(enVenta)}
@@ -3506,7 +3578,7 @@ async function finishSub(id){
 }
 
 /* ============================== DELETE CONFIRM ============================== */
-const DELETE_LABEL = { clientes: 'cliente', carteles: 'cartel', alquileres: 'alquiler', suscripciones: 'suscripción', fotos_trabajos: 'foto', fotos_clientes: 'foto', materiales: 'material', ventas: 'presupuesto', gastos: 'gasto', proveedores: 'proveedor' };
+const DELETE_LABEL = { clientes: 'cliente', carteles: 'cartel', alquileres: 'alquiler', suscripciones: 'suscripción', fotos_trabajos: 'foto', fotos_clientes: 'foto', productos: 'producto', materiales: 'material', ventas: 'presupuesto', gastos: 'gasto', proveedores: 'proveedor' };
 function confirmDelete(col, id){
   openModal(`
     ${modalHead('¿Eliminar ' + DELETE_LABEL[col] + '?')}
@@ -3546,6 +3618,12 @@ document.addEventListener('click', (e) => {
     else if (kind === 'portada-editor') openHeroEditorModal();
     else if (kind === 'portada-splash') openSplashEditorModal();
     else if (kind === 'compartir-pagina') openCompartirModal();
+    else if (kind === 'producto-nuevo') openProductoForm(null);
+    else if (kind === 'producto-editar') openProductoForm(id);
+    else if (kind === 'tienda-ajustes') openTiendaAjustes();
+    else if (kind === 'tienda-stock') openTiendaDesdeStock();
+    else if (kind === 'tienda-publicar') openTiendaPublicar();
+    else if (kind === 'tienda-preview'){ shopPreview = true; goTo('shop'); }
     else if (kind === 'material-nuevo') openMaterialForm(null);
     else if (kind === 'material-editar') openMaterialForm(id);
     else if (kind === 'proveedor-nuevo') openProveedorForm(null);
@@ -3585,19 +3663,17 @@ document.addEventListener('click', (e) => {
   const gateBtn = e.target.closest('[data-gate]');
   if (gateBtn){
     const which = gateBtn.getAttribute('data-gate');
-    if (which === 'cliente') setScreen('client');
+    if (which === 'cliente') goTo('client');
     else if (which === 'admin'){
-      let already = false;
-      try { already = localStorage.getItem('pueloneon_admin_auth') === 'ok'; } catch(e){}
-      if (already) setScreen('admin'); else openAdminPasswordModal();
-    } else if (which === 'salir') setScreen('gate');
+      if (isAdminAuthed()) goTo('admin'); else openAdminPasswordModal();
+    } else if (which === 'salir') goBackScreen();
     return;
   }
 
   const logoutBtn = e.target.closest('[data-logout]');
   if (logoutBtn){
     try { localStorage.removeItem('pueloneon_admin_auth'); } catch(e){}
-    setScreen('gate');
+    goBackScreen();
     return;
   }
 
@@ -3649,6 +3725,41 @@ document.addEventListener('click', (e) => {
     return;
   }
 
+  // ---- Tienda (administrador)
+  const tTog = e.target.closest('[data-tienda-toggle]');
+  if (tTog){ toggleTienda(); return; }
+  const tProdTog = e.target.closest('[data-tprod-toggle]');
+  if (tProdTog){
+    const pid = tProdTog.getAttribute('data-tprod-toggle');
+    const prod = getDoc('productos', pid);
+    if (prod) patchDoc('productos', pid, { visible: !prod.visible }).then(render);
+    return;
+  }
+  const tFil = e.target.closest('[data-tfilter]');
+  if (tFil){ tiendaFilter = tFil.getAttribute('data-tfilter'); render(); return; }
+
+  // ---- Tienda (cliente)
+  const openShop = e.target.closest('[data-open-tienda]');
+  if (openShop){ shopPreview = false; goTo('shop'); return; }
+  const shopBack = e.target.closest('[data-shop-back]');
+  if (shopBack){ goBackScreen(); return; }
+  const shopCat = e.target.closest('[data-shop-cat]');
+  if (shopCat){ shopFilter = shopCat.getAttribute('data-shop-cat'); renderShopScreen(); return; }
+  const shopCartBtn = e.target.closest('[data-shop-cart]');
+  if (shopCartBtn){ openCartModal(); return; }
+  const shopWa = e.target.closest('[data-shop-wa]');
+  if (shopWa){ window.open(waLink(WHATSAPP_RESERVAS, 'Hola! Quería consultar por materiales para armar carteles de neón.'), '_blank', 'noopener'); return; }
+  const cAdd = e.target.closest('[data-cart-add]');
+  if (cAdd){ cartChange(cAdd.getAttribute('data-cart-add'), 1); return; }
+  const cInc = e.target.closest('[data-cart-inc]');
+  if (cInc){ cartChange(cInc.getAttribute('data-cart-inc'), 1); return; }
+  const cDec = e.target.closest('[data-cart-dec]');
+  if (cDec){ cartChange(cDec.getAttribute('data-cart-dec'), -1); return; }
+  const cDel = e.target.closest('[data-cart-del]');
+  if (cDel){ cartRemove(cDel.getAttribute('data-cart-del')); return; }
+  const cClear = e.target.closest('[data-cart-clear]');
+  if (cClear){ cartClear(); return; }
+
   const delBtn = e.target.closest('[data-del]');
   if (delBtn){ confirmDelete(delBtn.getAttribute('data-del'), delBtn.getAttribute('data-id')); return; }
 
@@ -3673,6 +3784,12 @@ document.addEventListener('click', (e) => {
 });
 
 document.addEventListener('input', (e) => {
+  if (e.target && e.target.id === 'shopSearchInput'){
+    shopSearch = e.target.value;
+    const g = document.getElementById('shop-grid');
+    if (g) g.innerHTML = shopGridHtml();
+    return;
+  }
   if (e.target && e.target.id === 'searchInput'){
     search = e.target.value;
     const active = document.activeElement === e.target;
@@ -3681,12 +3798,616 @@ document.addEventListener('input', (e) => {
   }
 });
 
+/* ============================== TIENDA ============================== */
+/* ---- Utilidades ---- */
+function getTienda(){
+  const t = getDoc('config','tienda') || {};
+  return Object.assign({}, DEFAULT_TIENDA, t);
+}
+const ACRONIMOS = ['LED','RGB','RGBW','DC','AC','USB','PP','CM','UV','IP','PVC','SMD'];
+const ACENTOS = { neon: 'neón', plastico: 'plástico', tactil: 'táctil', calido: 'cálido', frio: 'frío', corporea: 'corpórea', acrilico: 'acrílico' };
+function limpiarNombre(raw){
+  let n = String(raw || '').trim();
+  const sinCodigo = n.replace(/^\([^)]*\)\s*/, '').trim();
+  if (sinCodigo) n = sinCodigo;
+  const letras = n.replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ]/g, '');
+  const mayus = letras.replace(/[^A-ZÁÉÍÓÚÜÑ]/g, '').length;
+  if (letras.length && mayus / letras.length > 0.6){
+    n = n.split(/(\s+)/).map(tok => {
+      if (!tok.trim()) return tok;
+      if (/\d/.test(tok)) return tok;
+      const core = tok.replace(/[^A-Za-zÁÉÍÓÚÜÑ]/g, '').toUpperCase();
+      if (ACRONIMOS.indexOf(core) !== -1) return tok.toUpperCase();
+      return tok.toLowerCase();
+    }).join('');
+  }
+  n = n.replace(/\b(neon|plastico|tactil|calido|frio|corporea|acrilico)\b/gi, m => {
+    const r = ACENTOS[m.toLowerCase()];
+    return (m[0] !== m[0].toLowerCase()) ? r.charAt(0).toUpperCase() + r.slice(1) : r;
+  });
+  return n.charAt(0).toUpperCase() + n.slice(1);
+}
+function guessCategoria(nombre){
+  const n = String(nombre || '').toLowerCase();
+  if (/fuente/.test(n)) return 'Fuentes de alimentación';
+  if (/ne[oó]n/.test(n)) return 'Neón LED';
+  if (/tira|zig ?zag|rollo/.test(n)) return 'Tiras LED';
+  if (/controlador|dimmer/.test(n)) return 'Controladoras y dimmers';
+  if (/sensor/.test(n)) return 'Sensores';
+  if (/cable|ficha|plug|conector|empalme/.test(n)) return 'Cables y conectores';
+  if (/perfil|soporte|separador|acr[ií]lico/.test(n)) return 'Perfiles y soportes';
+  if (/activador|ciano|pegamento|adhesivo/.test(n)) return 'Adhesivos';
+  return 'Otros';
+}
+function precioSugerido(costo, margen){
+  const c = Number(costo) || 0;
+  if (c <= 0) return 0;
+  return Math.ceil(c * (1 + (Number(margen) || 0) / 100) / 10) * 10;
+}
+function productoDesdeMaterial(m, margen){
+  const nombre = limpiarNombre(m.nombre);
+  return {
+    nombre, descripcion: '', categoria: guessCategoria(nombre), precio: precioSugerido(m.costo, margen),
+    imagen: null, materialId: m.id, stock: null, visible: false, unidad: m.unidad || 'unidad',
+  };
+}
+function productoStock(p){
+  if (p.materialId){
+    const m = getDoc('materiales', p.materialId);
+    if (m) return Number(m.cantidad) || 0;
+  }
+  if (p.stock != null && p.stock !== '') return Number(p.stock) || 0;
+  return null;
+}
+function productosPublicos(){
+  return arr('productos').filter(p => p.visible && Number(p.precio) > 0);
+}
+async function importTiendaInicial(){
+  if (getDoc('config', 'importado_tienda_v1')) return;
+  const iluMats = arr('materiales').filter(m => /^\s*\(/.test(m.nombre || ''));
+  if (!iluMats.length) return;
+  const margen = getTienda().margen;
+  for (const m of iluMats){
+    const pid = 'mat-' + m.id;
+    if (getDoc('productos', pid)) continue;
+    await writeDoc('productos', pid, productoDesdeMaterial(m, margen));
+  }
+  await writeDoc('config', 'importado_tienda_v1', { hecho: true, fecha: todayStr() });
+}
+
+/* ---- Admin: pestaña Tienda ---- */
+function renderTienda(){
+  const t = getTienda();
+  const todos = arr('productos');
+  const listos = todos.filter(p => p.visible && Number(p.precio) > 0).length;
+  const borradores = todos.filter(p => !p.visible).length;
+  const sinPrecio = todos.filter(p => !(Number(p.precio) > 0)).length;
+  const cats = ['Todas'].concat(Array.from(new Set(todos.map(p => p.categoria || 'Otros'))).sort());
+  let list = todos.slice();
+  if (tiendaFilter !== 'Todas') list = list.filter(p => (p.categoria || 'Otros') === tiendaFilter);
+  if (search.trim()){
+    const q = search.trim().toLowerCase();
+    list = list.filter(p => (p.nombre||'').toLowerCase().includes(q) || (p.categoria||'').toLowerCase().includes(q));
+  }
+  list.sort((a,b) => (a.categoria||'').localeCompare(b.categoria||'') || (a.nombre||'').localeCompare(b.nombre||''));
+  return `
+    <div class="page-head">
+      <div><h1>Tienda</h1><p class="sub">Los materiales que vendés a quienes arman sus propios carteles. Se arma con tu stock y vos elegís qué se publica y a qué precio.</p></div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="btn btn-ghost" data-open="tienda-preview">${ICON.cart}Ver como cliente</button>
+        <button class="btn btn-ghost" data-open="tienda-ajustes">${ICON.money}Ajustes</button>
+        <button class="btn btn-ghost" data-open="tienda-stock">${ICON.box}Agregar del stock</button>
+        <button class="btn btn-primary" data-open="producto-nuevo">${ICON.plus}Nuevo producto</button>
+      </div>
+    </div>
+
+    <div class="card tienda-status ${t.abierta ? 'open' : ''}">
+      <div>
+        <b>${t.abierta ? '🟢 Tienda abierta' : '🟠 Tienda en mantenimiento'}</b>
+        <span class="d">${t.abierta ? 'Tus clientes ya ven los productos publicados y pueden armar su carrito.' : 'Los clientes ven el cartel "En mantenimiento". Cuando tengas todo listo, abrila.'}</span>
+      </div>
+      <button class="btn ${t.abierta ? 'btn-ghost' : 'btn-primary'}" data-tienda-toggle="1">${t.abierta ? 'Pasar a mantenimiento' : 'Abrir tienda'}</button>
+    </div>
+
+    <div class="grid-stats">
+      <div class="card stat"><div class="n">${todos.length}</div><div class="l">Productos</div></div>
+      <div class="card stat glow"><div class="n">${listos}</div><div class="l">Publicados</div></div>
+      <div class="card stat"><div class="n">${borradores}</div><div class="l">Borradores</div></div>
+      <div class="card stat"><div class="n" style="color:${sinPrecio ? 'var(--warn)' : 'var(--ink)'};">${sinPrecio}</div><div class="l">Sin precio</div></div>
+    </div>
+
+    <div class="filterbar">
+      <div class="searchbox">${ICON.search}<input type="text" id="searchInput" placeholder="Buscar producto…" value="${esc(search)}"></div>
+      <button class="btn btn-ghost btn-sm" data-open="tienda-publicar">Publicar todos los listos</button>
+    </div>
+    <div class="filterbar">
+      ${cats.map(c => `<button class="chip ${tiendaFilter===c?'active':''}" data-tfilter="${esc(c)}">${esc(c)}</button>`).join('')}
+    </div>
+    ${todos.length === 0 ? `<div class="empty"><b>Todavía no hay productos</b>Sumalos desde tu stock con "Agregar del stock" o creá uno nuevo.</div>` :
+      list.length === 0 ? `<div class="empty"><b>No hay productos para mostrar</b>Probá con otra búsqueda o categoría.</div>` :
+      `<div class="list">${list.map(productoRow).join('')}</div>`}
+  `;
+}
+
+function productoRow(p){
+  const st = productoStock(p);
+  const tienePrecio = Number(p.precio) > 0;
+  const thumb = p.imagen ? `<img src="${p.imagen}" alt="" style="width:100%;height:100%;object-fit:cover;">` : ICON.box;
+  return `<div class="row-card">
+    <div class="row-avatar" style="width:48px;height:48px;overflow:hidden;padding:0;">${thumb}</div>
+    <div class="row-main">
+      <div class="t1">${esc(p.nombre)}</div>
+      <div class="t2">${esc(p.categoria || 'Otros')} · ${tienePrecio ? fmtMoney(p.precio) : '<span style="color:var(--warn);">Sin precio</span>'}${st != null ? ' · Stock ' + st : ''}${p.materialId ? ' <span title="Vinculado al stock">🔗</span>' : ''}</div>
+      <div style="margin-top:6px;"><button type="button" class="pill ${p.visible ? 'pill-green' : 'pill-mute'}" data-tprod-toggle="${p.id}" style="cursor:pointer; font-family:inherit;" title="Tocá para ${p.visible ? 'pasar a borrador' : 'publicar'}">${p.visible ? 'Publicado' : 'Borrador'}</button></div>
+    </div>
+    <div class="row-actions">
+      <button class="iconbtn" data-open="producto-editar" data-id="${p.id}" title="Editar">${ICON.edit}</button>
+      <button class="iconbtn" data-del="productos" data-id="${p.id}" title="Eliminar">${ICON.trash}</button>
+    </div>
+  </div>`;
+}
+
+async function toggleTienda(){
+  const t = getTienda();
+  const nueva = !t.abierta;
+  if (nueva && productosPublicos().length === 0){
+    showToast('Publicá al menos un producto con precio antes de abrir la tienda.');
+    return;
+  }
+  await patchDoc('config', 'tienda', { abierta: nueva });
+  render();
+  showToast(nueva ? 'Tienda abierta' : 'Tienda en mantenimiento');
+}
+
+function openTiendaAjustes(){
+  const t = getTienda();
+  let abierta = !!t.abierta;
+  openModal(`
+    ${modalHead('Ajustes de la tienda')}
+    <div class="field"><label>Estado de la tienda</label>
+      <div class="field-chips" id="ta-estado">
+        <button type="button" class="field-chip ${!abierta ? 'sel' : ''}" data-ab="0">En mantenimiento</button>
+        <button type="button" class="field-chip ${abierta ? 'sel' : ''}" data-ab="1">Abierta</button>
+      </div>
+    </div>
+    <div class="field"><label>Mensaje de mantenimiento</label><textarea id="ta-msg">${esc(t.mensaje)}</textarea>
+      <div class="hint">Es lo que lee el cliente mientras la tienda está en mantenimiento.</div>
+    </div>
+    <div class="field"><label>Margen de ganancia sugerido (%)</label><input type="number" id="ta-margen" min="0" step="5" value="${t.margen}">
+      <div class="hint">Para los productos que se arman desde el stock, el precio sugerido es: costo de compra + este margen.</div>
+    </div>
+    <div class="err-msg" id="ta-err"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost modal-close">Cancelar</button>
+      <button class="btn btn-primary" id="ta-save">Guardar</button>
+    </div>
+  `);
+  document.querySelectorAll('#ta-estado .field-chip').forEach(ch => {
+    ch.onclick = () => {
+      document.querySelectorAll('#ta-estado .field-chip').forEach(x => x.classList.remove('sel'));
+      ch.classList.add('sel');
+      abierta = ch.getAttribute('data-ab') === '1';
+    };
+  });
+  document.getElementById('ta-save').onclick = async () => {
+    if (abierta && productosPublicos().length === 0){
+      document.getElementById('ta-err').textContent = 'Para abrir la tienda publicá al menos un producto con precio.';
+      return;
+    }
+    await patchDoc('config', 'tienda', {
+      abierta,
+      mensaje: document.getElementById('ta-msg').value.trim() || DEFAULT_TIENDA.mensaje,
+      margen: Number(document.getElementById('ta-margen').value) || 0,
+    });
+    closeModal(); render();
+    showToast('Ajustes de la tienda guardados');
+  };
+}
+
+function openProductoForm(id){
+  const p = id ? getDoc('productos', id) : null;
+  const t = getTienda();
+  const cats = Array.from(new Set(arr('productos').map(x => x.categoria).filter(Boolean))).sort();
+  const mats = arr('materiales').sort((a,b) => (a.nombre||'').localeCompare(b.nombre||''));
+  openModal(`
+    ${modalHead(p ? 'Editar producto' : 'Nuevo producto')}
+    <div class="field"><label>Foto del producto</label>
+      <div class="imgpicker-row">
+        <div class="imgpicker-box" id="pr-img-preview"></div>
+        <div class="imgpicker-actions">
+          <label class="btn btn-ghost btn-sm" for="pr-img-input">${ICON.upload}Subir foto</label>
+          <input type="file" accept="image/*" id="pr-img-input" class="visually-hidden">
+          <button type="button" class="btn btn-ghost btn-sm" id="pr-img-quitar">Quitar foto</button>
+        </div>
+      </div>
+    </div>
+    <div class="field"><label>Nombre</label><input type="text" id="pr-nombre" value="${esc(p ? p.nombre : '')}" placeholder="Ej: Neón LED rojo 12V"></div>
+    <div class="field"><label>Descripción</label><textarea id="pr-desc" placeholder="Medidas, voltaje, usos… (opcional)">${esc(p ? p.descripcion : '')}</textarea></div>
+    <div class="field-row">
+      <div class="field"><label>Categoría</label>
+        <input type="text" id="pr-cat" list="pr-cat-list" value="${esc(p ? p.categoria : '')}" placeholder="Ej: Neón LED">
+        <datalist id="pr-cat-list">${cats.map(c => `<option value="${esc(c)}"></option>`).join('')}</datalist>
+      </div>
+      <div class="field"><label>Precio de venta ($)</label><input type="number" id="pr-precio" min="0" step="10" value="${p && p.precio ? p.precio : ''}"></div>
+    </div>
+    <div class="field"><label>Vincular con el stock</label>
+      <select id="pr-mat">
+        <option value="">— Sin vincular (stock manual) —</option>
+        ${mats.map(m => `<option value="${m.id}" ${p && p.materialId === m.id ? 'selected' : ''}>${esc(m.nombre)} (${m.cantidad} ${esc(m.unidad||'')})</option>`).join('')}
+      </select>
+      <div class="hint" id="pr-mat-hint"></div>
+    </div>
+    <div class="field" id="pr-stock-box"><label>Stock disponible (opcional)</label>
+      <input type="number" id="pr-stock" min="0" step="1" value="${p && p.stock != null ? p.stock : ''}" placeholder="Vacío = sin control de stock">
+    </div>
+    <div class="field"><label><input type="checkbox" id="pr-visible" ${p && p.visible ? 'checked' : ''} style="width:auto; margin-right:6px; vertical-align:middle;">Mostrar en la tienda</label>
+      <div class="hint">Solo se muestra si tiene precio y la tienda está abierta.</div>
+    </div>
+    <div class="err-msg" id="pr-err"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost modal-close">Cancelar</button>
+      <button class="btn btn-primary" id="pr-save">Guardar</button>
+    </div>
+  `);
+  const picker = bindImagePicker('pr-img-input', 'pr-img-preview', p ? p.imagen : null, () => {});
+  document.getElementById('pr-img-quitar').onclick = () => picker.clear();
+
+  function updateMat(){
+    const matId = document.getElementById('pr-mat').value;
+    const m = matId ? getDoc('materiales', matId) : null;
+    document.getElementById('pr-stock-box').style.display = m ? 'none' : '';
+    const hint = document.getElementById('pr-mat-hint');
+    if (!m){ hint.innerHTML = 'Si lo vinculás, el stock de la tienda se actualiza solo con tu inventario.'; return; }
+    const sug = precioSugerido(m.costo, t.margen);
+    hint.innerHTML = `Stock actual: <b>${m.cantidad} ${esc(m.unidad||'')}</b> · Costo de compra: <b>${fmtMoney(m.costo)}</b>` +
+      (sug ? ` · Precio sugerido (+${t.margen}%): <b>${fmtMoney(sug)}</b> <button type="button" class="btn btn-ghost btn-sm" id="pr-sug" style="margin-left:6px;">Usar sugerido</button>` : '');
+    const b = document.getElementById('pr-sug');
+    if (b) b.onclick = () => { document.getElementById('pr-precio').value = sug; };
+  }
+  document.getElementById('pr-mat').onchange = () => {
+    const m = getDoc('materiales', document.getElementById('pr-mat').value);
+    if (m && !document.getElementById('pr-nombre').value.trim()){
+      const n = limpiarNombre(m.nombre);
+      document.getElementById('pr-nombre').value = n;
+      if (!document.getElementById('pr-cat').value.trim()) document.getElementById('pr-cat').value = guessCategoria(n);
+    }
+    updateMat();
+  };
+  updateMat();
+
+  document.getElementById('pr-save').onclick = async () => {
+    const nombre = document.getElementById('pr-nombre').value.trim();
+    if (!nombre){ document.getElementById('pr-err').textContent = 'Poné un nombre para el producto.'; return; }
+    const precio = Number(document.getElementById('pr-precio').value) || 0;
+    const matId = document.getElementById('pr-mat').value || null;
+    const stockRaw = document.getElementById('pr-stock').value;
+    const mat = matId ? getDoc('materiales', matId) : null;
+    const data = {
+      nombre,
+      descripcion: document.getElementById('pr-desc').value.trim(),
+      categoria: document.getElementById('pr-cat').value.trim() || 'Otros',
+      precio,
+      imagen: picker.get(),
+      materialId: matId,
+      stock: matId ? null : (stockRaw === '' ? null : Number(stockRaw)),
+      visible: document.getElementById('pr-visible').checked,
+      unidad: mat ? (mat.unidad || 'unidad') : ((p && p.unidad) || 'unidad'),
+    };
+    await writeDoc('productos', id || uid(), data);
+    closeModal(); render();
+    showToast(p ? 'Producto actualizado' : 'Producto agregado');
+  };
+}
+
+function openTiendaDesdeStock(){
+  const linked = new Set(arr('productos').map(p => p.materialId).filter(Boolean));
+  const pend = arr('materiales').filter(m => !linked.has(m.id)).sort((a,b) => (a.nombre||'').localeCompare(b.nombre||''));
+  const margen = getTienda().margen;
+  if (!pend.length){
+    openModal(`${modalHead('Agregar del stock')}<div class="empty"><b>Todo el stock ya está en la tienda</b>Cuando cargues materiales nuevos en Stock, los vas a poder sumar desde acá.</div>
+      <div class="modal-actions"><button class="btn btn-primary modal-close" style="flex:1;">Entendido</button></div>`);
+    return;
+  }
+  openModal(`
+    ${modalHead('Agregar del stock')}
+    <p style="margin:-6px 0 12px; font-size:12.5px; color:var(--ink-dim);">Elegí los materiales que querés vender. Se crean como <b>borrador</b> con el precio sugerido (costo + ${margen}%) y la categoría armada sola; después los revisás y publicás.</p>
+    <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:700; color:var(--ink); margin-bottom:8px;"><input type="checkbox" id="ts-all" style="width:auto;">Seleccionar todos (${pend.length})</label>
+    <div style="max-height:46vh; overflow-y:auto; border:1px solid var(--panel-border-soft); border-radius:10px; padding:4px 10px;">
+      ${pend.map(m => `
+        <label style="display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--panel-border-soft); font-size:12.5px; color:var(--ink);">
+          <input type="checkbox" class="ts-check" value="${m.id}" style="width:auto;">
+          <span style="flex:1;">${esc(limpiarNombre(m.nombre))}<small style="display:block; color:var(--ink-dim);">${m.cantidad} ${esc(m.unidad||'')} · costo ${fmtMoney(m.costo)}</small></span>
+        </label>`).join('')}
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost modal-close">Cancelar</button>
+      <button class="btn btn-primary" id="ts-add">Agregar a la tienda</button>
+    </div>
+  `);
+  document.getElementById('ts-all').onchange = (e) => {
+    document.querySelectorAll('.ts-check').forEach(c => { c.checked = e.target.checked; });
+  };
+  document.getElementById('ts-add').onclick = async () => {
+    const ids = Array.from(document.querySelectorAll('.ts-check')).filter(c => c.checked).map(c => c.value);
+    if (!ids.length){ showToast('Elegí al menos un material.'); return; }
+    for (const mid of ids){
+      const m = getDoc('materiales', mid);
+      if (!m) continue;
+      await writeDoc('productos', 'mat-' + m.id, productoDesdeMaterial(m, margen));
+    }
+    closeModal(); render();
+    showToast(ids.length + (ids.length === 1 ? ' producto agregado' : ' productos agregados') + ' como borrador');
+  };
+}
+
+function openTiendaPublicar(){
+  const pend = arr('productos').filter(p => !p.visible && Number(p.precio) > 0);
+  if (!pend.length){
+    openModal(`${modalHead('Publicar productos')}<div class="empty"><b>No hay borradores con precio</b>Los productos sin precio no se pueden publicar.</div>
+      <div class="modal-actions"><button class="btn btn-primary modal-close" style="flex:1;">Entendido</button></div>`);
+    return;
+  }
+  openModal(`
+    ${modalHead('Publicar productos')}
+    <p style="margin:0 0 6px; font-size:13.5px; color:var(--ink);">Vas a publicar <b>${pend.length}</b> ${pend.length === 1 ? 'producto' : 'productos'} con el precio que tienen cargado ahora.</p>
+    <p style="margin:0 0 6px; font-size:12.5px; color:var(--ink-dim);">Revisá antes que los precios estén bien. Los que no tienen precio quedan como borrador.</p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost modal-close">Cancelar</button>
+      <button class="btn btn-primary" id="tp-ok">Publicar</button>
+    </div>
+  `);
+  document.getElementById('tp-ok').onclick = async () => {
+    for (const p of pend) await patchDoc('productos', p.id, { visible: true });
+    closeModal(); render();
+    showToast(pend.length + (pend.length === 1 ? ' producto publicado' : ' productos publicados'));
+  };
+}
+
+/* ---- Cliente: tienda y carrito ---- */
+function getCart(){
+  try { return JSON.parse(localStorage.getItem('pueloneon_cart') || '{}') || {}; } catch(e){ return {}; }
+}
+function saveCart(c){
+  try { localStorage.setItem('pueloneon_cart', JSON.stringify(c)); } catch(e){}
+}
+function cartItems(cart){
+  cart = cart || getCart();
+  const items = [];
+  Object.keys(cart).forEach(pid => {
+    const p = getDoc('productos', pid);
+    if (!p || !p.visible || !(Number(p.precio) > 0)) return;
+    const q = Number(cart[pid]) || 0;
+    if (q > 0) items.push({ p, q, subtotal: q * Number(p.precio) });
+  });
+  return items;
+}
+function cartChange(pid, delta){
+  const p = getDoc('productos', pid);
+  if (!p) return;
+  const cart = getCart();
+  let q = (Number(cart[pid]) || 0) + delta;
+  const st = productoStock(p);
+  if (st != null && q > st){ q = st; showToast('No hay más stock de este producto.'); }
+  if (q <= 0) delete cart[pid]; else cart[pid] = q;
+  saveCart(cart);
+  updateShopUI();
+}
+function cartRemove(pid){
+  const cart = getCart();
+  delete cart[pid];
+  saveCart(cart);
+  updateShopUI();
+}
+function cartClear(){ saveCart({}); updateShopUI(); }
+function updateShopUI(){
+  if (screen === 'shop') renderShopScreen();
+  if (document.getElementById('cart-modal-marker')){
+    if (cartItems().length) openCartModal(); else closeModal();
+  }
+}
+
+function shopGridHtml(){
+  let list = productosPublicos();
+  if (shopFilter !== 'Todas') list = list.filter(p => (p.categoria || 'Otros') === shopFilter);
+  if (shopSearch.trim()){
+    const q = shopSearch.trim().toLowerCase();
+    list = list.filter(p => (p.nombre||'').toLowerCase().includes(q) || (p.descripcion||'').toLowerCase().includes(q) || (p.categoria||'').toLowerCase().includes(q));
+  }
+  list.sort((a,b) => (a.categoria||'').localeCompare(b.categoria||'') || (a.nombre||'').localeCompare(b.nombre||''));
+  if (!list.length){
+    return `<div class="empty"><b>No encontramos productos</b>${productosPublicos().length ? 'Probá con otra búsqueda o categoría.' : 'Todavía no hay productos publicados.'}</div>`;
+  }
+  const cart = getCart();
+  return `<div class="shop-grid">${list.map(p => shopCardHtml(p, cart)).join('')}</div>`;
+}
+function shopCardHtml(p, cart){
+  const st = productoStock(p);
+  const q = Number(cart[p.id]) || 0;
+  const agotado = st != null && st <= 0;
+  const img = p.imagen
+    ? `<div class="shop-img" data-lightbox-photo="productos|${p.id}" style="background-image:url('${p.imagen}');"></div>`
+    : `<div class="shop-img placeholder">${ICON.box}</div>`;
+  const control = agotado
+    ? `<button class="btn btn-ghost btn-block" disabled>Agotado</button>`
+    : (q > 0
+      ? `<div class="stepper"><button data-cart-dec="${p.id}">−</button><span>${q}</span><button data-cart-inc="${p.id}">+</button></div>`
+      : `<button class="btn btn-primary btn-block" data-cart-add="${p.id}">Agregar</button>`);
+  return `
+    <div class="shop-card">
+      ${img}
+      <div class="shop-card-body">
+        <h4>${esc(p.nombre)}</h4>
+        <div class="price">${fmtMoney(p.precio)}</div>
+        <div class="low">${st != null && st > 0 && st <= 5 ? 'Quedan ' + st : ''}</div>
+        ${control}
+      </div>
+    </div>`;
+}
+
+function shopMaintHtml(t){
+  return `
+    <div class="shop-maint">
+      <button class="btn btn-ghost btn-sm" data-shop-back="1" style="position:absolute; top:calc(14px + env(safe-area-inset-top,0px)); left:16px;">← Volver</button>
+      <img src="${LOGO_DATA_URL}" alt="Puelo Neón" style="width:104px; filter:drop-shadow(0 0 16px rgba(77,255,163,.3));">
+      <div style="font-size:34px; line-height:1;">🛠️</div>
+      <h1 style="font-family:var(--font-display); font-size:26px; color:var(--white); margin:0;">Tienda en mantenimiento</h1>
+      <p style="max-width:34ch; color:var(--ink-dim); font-size:15px; line-height:1.5; margin:0;">${esc(t.mensaje)}</p>
+      <button class="btn btn-wa" data-shop-wa="1" style="margin-top:6px;">${ICON.wa}Consultanos por WhatsApp</button>
+    </div>`;
+}
+
+function renderShopScreen(){
+  const el = document.getElementById('shop-screen');
+  if (!el) return;
+  if (dbMode === 'init'){ el.innerHTML = renderLoading(); return; }
+  const t = getTienda();
+  if (!t.abierta && !shopPreview){ el.innerHTML = shopMaintHtml(t); return; }
+  const y = window.scrollY;
+  const publicos = productosPublicos();
+  const cats = ['Todas'].concat(Array.from(new Set(publicos.map(p => p.categoria || 'Otros'))).sort());
+  if (cats.indexOf(shopFilter) === -1) shopFilter = 'Todas';
+  const items = cartItems();
+  const count = items.reduce((a,i) => a + i.q, 0);
+  const total = items.reduce((a,i) => a + i.subtotal, 0);
+  el.innerHTML = `
+    ${shopPreview && !t.abierta ? `<div class="shop-preview-banner">Vista previa del administrador · los clientes ven "En mantenimiento" hasta que abras la tienda</div>` : ''}
+    <div class="shop-header">
+      <button class="btn btn-ghost btn-sm" data-shop-back="1">← Volver</button>
+      <h1>Tienda</h1>
+      <button class="shop-cart-btn" data-shop-cart="1" title="Ver carrito">${ICON.cart}${count ? `<span class="cbadge">${count}</span>` : ''}</button>
+    </div>
+    <div class="shop-body">
+      <p style="margin:0 0 14px; color:var(--ink-dim); font-size:13.5px;">Materiales para armar tus propios carteles de neón.</p>
+      <div class="filterbar"><div class="searchbox">${ICON.search}<input type="text" id="shopSearchInput" placeholder="Buscar producto…" value="${esc(shopSearch)}"></div></div>
+      <div class="filterbar">${cats.map(c => `<button class="chip ${shopFilter===c?'active':''}" data-shop-cat="${esc(c)}">${esc(c)}</button>`).join('')}</div>
+      <div id="shop-grid">${shopGridHtml()}</div>
+    </div>
+    ${count ? `<div class="shop-cartbar"><button class="btn btn-primary btn-block" data-shop-cart="1">${ICON.cart}Ver carrito · ${count} ${count === 1 ? 'producto' : 'productos'} · ${fmtMoney(total)}</button></div>` : ''}
+  `;
+  window.scrollTo(0, y);
+}
+
+function captureCartForm(){
+  const n = document.getElementById('cf-nombre');
+  if (n) cartForm.nombre = n.value;
+  const d = document.getElementById('cf-dir');
+  if (d) cartForm.dir = d.value;
+  const o = document.getElementById('cf-notas');
+  if (o) cartForm.notas = o.value;
+}
+
+function openCartModal(){
+  captureCartForm();
+  const items = cartItems();
+  if (!items.length){
+    openModal(`${modalHead('Tu carrito')}<span id="cart-modal-marker" hidden></span><div class="empty"><b>Tu carrito está vacío</b>Agregá productos desde la tienda.</div>
+      <div class="modal-actions"><button class="btn btn-primary modal-close" style="flex:1;">Seguir mirando</button></div>`);
+    return;
+  }
+  const total = items.reduce((a,i) => a + i.subtotal, 0);
+  openModal(`
+    ${modalHead('Tu carrito')}
+    <span id="cart-modal-marker" hidden></span>
+    <div>
+      ${items.map(i => `
+        <div class="cart-line">
+          <div class="nm">${esc(i.p.nombre)}<small>${fmtMoney(i.p.precio)} c/u · ${fmtMoney(i.subtotal)}</small></div>
+          <div class="stepper"><button data-cart-dec="${i.p.id}">−</button><span>${i.q}</span><button data-cart-inc="${i.p.id}">+</button></div>
+          <button class="iconbtn" data-cart-del="${i.p.id}" title="Quitar">${ICON.trash}</button>
+        </div>`).join('')}
+    </div>
+    <div class="breakdown-row" style="font-weight:800; color:var(--white); font-size:16px; margin:12px 0;"><span>Total</span><span style="color:var(--green);">${fmtMoney(total)}</span></div>
+    <div class="field"><label>Tu nombre</label><input type="text" id="cf-nombre" value="${esc(cartForm.nombre)}" placeholder="Nombre y apellido"></div>
+    <div class="field"><label>Localidad / dirección (o "retiro en el local")</label><input type="text" id="cf-dir" value="${esc(cartForm.dir)}" placeholder="Para coordinar el envío o retiro"></div>
+    <div class="field"><label>Notas (opcional)</label><textarea id="cf-notas" placeholder="Algo que quieras aclarar sobre el pedido">${esc(cartForm.notas)}</textarea></div>
+    <div class="err-msg" id="cf-err"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" data-cart-clear="1">Vaciar</button>
+      <button class="btn btn-wa" id="cf-send">${ICON.wa}Enviar pedido</button>
+    </div>
+  `);
+  document.getElementById('cf-send').onclick = () => {
+    captureCartForm();
+    const nombre = cartForm.nombre.trim();
+    const dir = cartForm.dir.trim();
+    if (!nombre || !dir){ document.getElementById('cf-err').textContent = 'Completá tu nombre y tu localidad o dirección.'; return; }
+    // Revisar stock antes de enviar
+    const cart = getCart();
+    let ajustado = false;
+    cartItems(cart).forEach(i => {
+      const st = productoStock(i.p);
+      if (st != null && i.q > st){ ajustado = true; if (st <= 0) delete cart[i.p.id]; else cart[i.p.id] = st; }
+    });
+    if (ajustado){
+      saveCart(cart); updateShopUI();
+      const e = document.getElementById('cf-err');
+      if (e) e.textContent = 'Ajustamos algunas cantidades según el stock disponible. Revisá el pedido y volvé a enviarlo.';
+      return;
+    }
+    const lines = items.map(i => `• ${i.q} x ${i.p.nombre} — ${fmtMoney(i.subtotal)}`).join('\n');
+    const msg = '¡Hola! Quiero hacer un pedido de materiales en la tienda de Puelo Neón 🛒\n\n' +
+      `*Nombre:* ${nombre}\n*Localidad / dirección:* ${dir}\n\n*Pedido:*\n${lines}\n\n*Total: ${fmtMoney(total)}*` +
+      (cartForm.notas.trim() ? `\n\n*Notas:* ${cartForm.notas.trim()}` : '') +
+      '\n\nQuedo atento/a para coordinar el pago y la entrega. ¡Gracias!';
+    window.open(waLink(WHATSAPP_RESERVAS, msg), '_blank', 'noopener');
+    showToast('Se abrió WhatsApp con tu pedido');
+  };
+}
+
+/* ============================== BOTÓN "ATRÁS" DEL CELULAR ============================== */
+/* La app es una sola página, así que le damos al navegador un historial propio:
+   "atrás" vuelve a la pantalla anterior (o cierra la ventana abierta) en vez de salir del sitio.
+   - Entrada 0 ("guardia"): al llegar ahí con "atrás" se sale del sitio, como siempre.
+   - Entrada 1 en adelante: pantallas de la app (se crea con el primer toque del usuario). */
+let navIndex = 0;
+let baseReady = false;
+function isAdminAuthed(){
+  try { return localStorage.getItem('pueloneon_admin_auth') === 'ok'; } catch(e){ return false; }
+}
+function ensureBaseEntry(){
+  if (baseReady) return;
+  baseReady = true;
+  navIndex = 1;
+  try { history.pushState({ screen: screen, i: 1 }, ''); } catch(e){}
+}
+document.addEventListener('click', ensureBaseEntry, true);
+
+function goTo(s){
+  ensureBaseEntry();
+  navIndex += 1;
+  try { history.pushState({ screen: s, i: navIndex }, ''); } catch(e){}
+  setScreen(s);
+}
+function goBackScreen(){
+  if (navIndex > 1){ history.back(); return; }
+  setScreen('gate');
+  try { history.replaceState({ screen: 'gate', i: navIndex }, ''); } catch(e){}
+}
+window.addEventListener('popstate', (e) => {
+  const root = document.getElementById('modal-root');
+  const preview = document.getElementById('splash-preview');
+  if ((root && root.children.length) || preview){
+    // Hay una ventana abierta: "atrás" solo la cierra y deja al usuario en la misma pantalla.
+    try { history.pushState({ screen: screen, i: navIndex }, ''); } catch(err){}
+    if (preview) preview.remove();
+    closeModal();
+    return;
+  }
+  const st = e.state || {};
+  if (st.guard){ history.back(); return; }   // estábamos en la primera pantalla: ahora sí salimos del sitio
+  let target = st.screen || 'gate';
+  if (target === 'admin' && !isAdminAuthed()) target = 'gate';
+  navIndex = st.i || 0;
+  if (target !== screen) setScreen(target);
+});
+
 /* ============================== INIT ============================== */
 renderGateScreen();
 try {
   const qp = new URLSearchParams(location.search);
   if (qp.has('cliente') || location.hash === '#cliente'){ directClient = true; setScreen('client'); }
 } catch(e){}
+try { history.replaceState({ screen: screen, i: 0, guard: true }, ''); } catch(e){}
 initData();
 })();
 </script>
